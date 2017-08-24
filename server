@@ -5,11 +5,12 @@ import re
 import mimetypes
 import sqlite3
 import os.path
+import os
 import csv
 
 PORT_NUMBER=8000
 
-transactions = re.compile('^transactions.csv$')
+transactions = re.compile('^data.csv$')
 
 class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
   def do_GET(s):
@@ -26,32 +27,18 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
       
     except IOError:
     
-      if transactions.match(p) and os.path.isfile('transactions.dat'):
-        try:
-          conn = sqlite3.connect('transactions.dat')
-          conn.row_factory = sqlite3.Row
-          curr = conn.cursor()
-          
-          curr.execute('PRAGMA table_info(\'transactions\')')
-          pragma = []
-          
-          for row in curr:
-            pragma.append(row[1])
-          
-          out = csv.writer(s.wfile)
-          out.writerow(pragma)
-          
-          curr.execute('SELECT * FROM transactions')
-          data = curr.fetchall()
-          for d in data:
-			for e in list(d):
-				s.wfile.write(e)
-				s.wfile.write(',')
-			s.wfile.write('\n')
+      if transactions.match(p):
+        
+        items = os.listdir('data')
+        
+        s.wfile.write('name,\n')
+        
+        for i in items:
+        
+          s.wfile.write('data' + os.path.sep + i)
+          s.wfile.write(',')
+          s.wfile.write('\n')
             
-          conn.close()
-        except sqlite3.Error:
-          s.send_error(503, 'Could not open database')
         
       else:
         s.send_error(404, 'File not found')
