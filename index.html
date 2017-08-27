@@ -1,23 +1,42 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
+p.error{
+  background-color:red;
+}
 </style>
 <body>
 <h1>Garmin Dashboard</h1>
+<div id="activities"></div>
+<div id="current"></div>
 <script src="/d3.js"></script>
 <script>
 
+
+
 d3.csv('/data.csv', function(err,items) {
+  d3.select('body').append('p').attr('class','error').text(JSON.stringify(items));
+
+  var p = d3.select('#activities').append('ul').selectAll('li').data(items);
+
+  p.enter().append('li');
+
+  p.exit().remove();
+
+  p.text(function(d) { return d.name; })
+   .on('click', function(d) {
+     
+     d3.select('#activities').style('display','none');
+     
+     d3.select('#current').append('div').text(d.name);
+     
+   });
 	
-	var p = d3.select('body').selectAll('p').data(items);
-
-	p.enter().append('p');
-
-	p.exit().remove();
-
-	p.text(function(d) { return d.name; });
 	
 });
+
+
+
 	
 </script>
 </body>
