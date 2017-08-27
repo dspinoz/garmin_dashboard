@@ -202,10 +202,7 @@
           <table class="table table-bordered table-hover" id="data-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Amount</th>
-                <th>Note</th>
+                <th>Name</th>
               </tr>
             </thead>
           </table>
@@ -216,28 +213,108 @@
 
     <script>
     
+var facts = crossfilter();
+
+var dataTableOptions = {
+  "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
+  "footerCallback": function ( row, data, start, end, display ) {
+    var api = this.api(), data ;
+  },
+  "order": [[0, 'desc']],
+  "dom": 'T<"clear-l"l><"clear-l"i><"clear-r"f><"clear-r"p>t',
+  "tableTools": {
+    "sSwfPath": "copy_csv_xls_pdf.swf"
+  },
+  columnDefs: [
+    {
+      targets: 0,
+      data: function(d) { return d.name; }
+    }
+  ]
+} ;
 
 
-d3.csv('/data.csv', function(err,items) {
-  d3.select('body').append('p').attr('class','error').text(JSON.stringify(items));
+var dataTable = $("#data-table").dataTable(dataTableOptions);
 
-  var p = d3.select('#activities').append('ul').selectAll('li').data(items);
+function RefreshTable() {
+  dc.events.trigger(function () {
+    dataTable.api()
+      .clear()
+      .rows.add(facts.dimension(function (d) {
+                  return d.eid;
+                }).top(Infinity))
+      .draw() ;
+  });
+}
 
-  p.enter().append('li');
+for (var i = 0; i < dc.chartRegistry.list().length; i++) {
+  var chartI = dc.chartRegistry.list()[i];
+  chartI.on("filtered", RefreshTable);
+}
 
-  p.exit().remove();
 
-  p.text(function(d) { return d.name; })
-   .on('click', function(d) {
-     
-     d3.select('#activities').style('display','none');
-     
-     d3.select('#current').append('div').text(d.name);
-     
-   });
-	
-	
-});
+
+
+
+d3.csv("/data.csv", 
+  function(d) { 
+    var d2 = {
+      _orig: JSON.parse(JSON.stringify(d)),
+      name: d.name,
+      _valid: true
+    };
+    
+    return d2;
+  }, 
+  function(error, csv) {
+    
+    if (error) {
+      console.log(error);
+      d3.select('body').append('p').attr('class','error').text(JSON.stringify(error));
+      return;
+    }
+    
+    
+    // logging
+    var p = d3.select('#activities').append('ul').selectAll('li').data(csv);
+
+    p.enter().append('li');
+
+    p.exit().remove();
+
+    p.text(function(d) { return d.name; })
+     .on('click', function(d) {
+       
+       d3.select('#activities').style('display','none');
+       
+       d3.select('#current').append('div').text(d.name);
+       
+     });
+    
+    
+    //only put valid data though
+    var data = [];
+    csv.forEach(function(d) {
+        
+      if (!d._valid) {
+        console.log('Invalid data', d._orig);
+        return;
+      }
+        
+      data.push(d);
+    });
+    
+    facts.add(data);
+    
+    console.log('renderall');
+    
+    RefreshTable();
+    
+    dc.renderAll();
+    
+    console.log('renderall done');
+    
+  });
 
 
 
