@@ -205,6 +205,12 @@
             <thead>
               <tr>
                 <th>Time</th>
+                <th>Lap</th>
+                <th>Distance</th>
+                <th>Heart Rate</th>
+                <th>Latitude</th>
+                <th>Longitude</th>
+                <th>Altitude</th>
               </tr>
             </thead>
           </table>
@@ -231,6 +237,30 @@ var dataTableOptions = {
     {
       targets: 0,
       data: function(d) { return d['Time']; }
+    },
+    {
+      targets: 1,
+      data: function(d) { return d['Lap']; }
+    },
+    {
+      targets: 2,
+      data: function(d) { return d['Distance']; }
+    },
+    {
+      targets: 3,
+      data: function(d) { return d['Heart Rate']; }
+    },
+    {
+      targets: 4,
+      data: function(d) { return d['Position Lat']; }
+    },
+    {
+      targets: 5,
+      data: function(d) { return d['Position Lon']; }
+    },
+    {
+      targets: 6,
+      data: function(d) { return d['Altitude']; }
     }
   ]
 } ;
