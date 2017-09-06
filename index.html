@@ -139,6 +139,8 @@
     <link href='/bower_components/datatables/media/css/dataTables.bootstrap.css' rel='stylesheet' type='text/css'>
     <script src='/bower_components/cubism/cubism.v1.js' type='text/javascript'></script>
     
+    <script src='/tcx_parser.js' type='text/javascript'></script>
+    
     <!--
     <script src='/mytreeChart.js' type='text/javascript'></script>
     <script src='/mycalendarChart.js' type='text/javascript'></script>
@@ -202,7 +204,7 @@
           <table class="table table-bordered table-hover" id="data-table">
             <thead>
               <tr>
-                <th>Name</th>
+                <th>Time</th>
               </tr>
             </thead>
           </table>
@@ -228,7 +230,7 @@ var dataTableOptions = {
   columnDefs: [
     {
       targets: 0,
-      data: function(d) { return d.name; }
+      data: function(d) { return d['Time']; }
     }
   ]
 } ;
@@ -255,12 +257,83 @@ for (var i = 0; i < dc.chartRegistry.list().length; i++) {
 
 
 
+var xslStylesheet;
+var xsltProcessor = new XSLTProcessor();
+var myDOM;
+
+var xmlDoc;
+
+// load the xslt file, example1.xsl
+  var myXMLHTTPRequest = new XMLHttpRequest();
+  myXMLHTTPRequest.open("GET", "tcx_to_csv.xsl", false);
+  myXMLHTTPRequest.send(null);
+
+  xslStylesheet = myXMLHTTPRequest.responseXML;
+  xsltProcessor.importStylesheet(xslStylesheet);
+
+
+  // load the xml file, example1.xml
+  myXMLHTTPRequest = new XMLHttpRequest();
+  myXMLHTTPRequest.open("GET", "tcx.xml", false);
+  myXMLHTTPRequest.send(null);
+
+  xmlDoc = myXMLHTTPRequest.responseXML;
+  
+  console.log('xml', xmlDoc);
+
+  var fragment = xsltProcessor.transformToFragment(xmlDoc, document);
+
+  //document.getElementById("example").innerHTML = "";
+
+  myDOM = fragment;
+  //document.getElementById("example").appendChild(fragment);
+
+  var rows = fragment.textContent.split('\n');
+  
+  var header = rows.shift().split(',');
+  
+  var data = rows.map(function(d) {
+    
+    var cols = d.split(',');
+    
+    return cols.reduce(function(accum,val,i) {
+      accum[i] = val;
+      accum[header[i]] = val;
+      return accum;
+    }, {});
+  });
+  
+  
+  //d3.select('body').append('p').attr('class','error').text(JSON.stringify(data.shift()));
+
+    console.log('data[0]', data[0]);
+
+    facts.add(data);
+    
+    console.log('renderall');
+    
+    RefreshTable();
+    
+    dc.renderAll();
+    
+    console.log('renderall done');
+    
+
+
+
+
+
+
+
+/*
+
 
 d3.csv("/data.csv", 
   function(d) { 
     var d2 = {
       _orig: JSON.parse(JSON.stringify(d)),
       name: d.name,
+      _tcx: tcx.read(d.name,undefined,d3),
       _valid: true
     };
     
@@ -316,7 +389,7 @@ d3.csv("/data.csv",
     
   });
 
-
+*/
 
     </script>
   </body>
