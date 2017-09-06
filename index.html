@@ -172,10 +172,10 @@
         <div class="col-sm-4">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title">A</h3>
+              <h3 class="panel-title">Laps</h3>
             </div>
             <div class="panel-body">
-              <div id="chartA"></div>
+              <div id="chart-laps"></div>
             </div>
           </div>
         </div>
@@ -267,6 +267,7 @@ var dataTableOptions = {
 
 
 var dataTable = $("#data-table").dataTable(dataTableOptions);
+var chartLaps = dc.pieChart("#chart-laps");
 
 function RefreshTable() {
   dc.events.trigger(function () {
@@ -284,7 +285,13 @@ for (var i = 0; i < dc.chartRegistry.list().length; i++) {
   chartI.on("filtered", RefreshTable);
 }
 
+var chartLapsDim = facts.dimension(function(d) { return d['Lap']; });
 
+chartLaps
+  .innerRadius(30)
+  .title(function(d){return d['Lap'];})
+  .dimension(chartLapsDim)
+  .group(chartLapsDim.group().reduceCount());
 
 
 var xslStylesheet;
