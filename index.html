@@ -182,9 +182,10 @@
         <div class="col-sm-4">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title">B</h3>
+              <h3 class="panel-title">Heart Rate / Time</h3>
             </div>
             <div class="panel-body">
+              <div id="chart-laps-time"></div>
             </div>
           </div>
         </div>
@@ -268,6 +269,7 @@ var dataTableOptions = {
 
 var dataTable = $("#data-table").dataTable(dataTableOptions);
 var chartLaps = dc.pieChart("#chart-laps");
+var chartLapsTime = dc.lineChart("#chart-laps-time");
 
 function RefreshTable() {
   dc.events.trigger(function () {
@@ -292,6 +294,7 @@ chartLaps
   .title(function(d){return d['Lap'];})
   .dimension(chartLapsDim)
   .group(chartLapsDim.group().reduceCount());
+
 
 
 var xslStylesheet;
@@ -329,6 +332,9 @@ var xmlDoc;
   
   var header = rows.shift().split(',');
   
+  // eg. 2011-09-07T02:44:10.000Z
+  var timeParser = d3.time.format.iso;
+  
   var data = rows.map(function(d) {
     
     var cols = d.split(',');
@@ -336,6 +342,11 @@ var xmlDoc;
     return cols.reduce(function(accum,val,i) {
       accum[i] = val;
       accum[header[i]] = val;
+      
+      if (i == 1 && header[i] == 'Time') {
+        accum['Time Parsed'] = timeParser.parse(val);
+      }
+      
       return accum;
     }, {});
   });
@@ -346,6 +357,21 @@ var xmlDoc;
     console.log('data[0]', data[0]);
 
     facts.add(data);
+    
+    
+    
+var chartLapsTimeDim = facts.dimension(function(d) { return d['Time Parsed']; });
+var chartLapsTimeGroup = chartLapsTimeDim.group().reduceSum(function(d) { return d['Heart Rate']; });
+    
+chartLapsTime
+  .x(d3.time.scale()
+    .domain(d3.extent(chartLapsTimeGroup.all(), function(d) { return d.key; })))
+  .y(d3.scale.linear().domain(d3.extent(chartLapsTimeGroup.all(), function(d) { return d.value; })))
+  .dimension(chartLapsTimeDim)
+  .group(chartLapsTimeGroup);
+    
+    
+    
     
     console.log('renderall');
     
