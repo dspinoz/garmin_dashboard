@@ -347,6 +347,10 @@ var xmlDoc;
         accum['Time Parsed'] = timeParser.parse(val);
       }
       
+      if (i == 4 && header[i] == 'Heart Rate') {
+        accum['Heart Rate'] = +val;
+      }
+      
       return accum;
     }, {});
   });
@@ -359,15 +363,42 @@ var xmlDoc;
     facts.add(data);
     
     
+function reduceAddAvg(attr) {
+  return function(p,v) {
+    ++p.count
+    p.sum += v[attr];
+    p.avg = p.sum/p.count;
+    return p;
+  };
+}
+function reduceRemoveAvg(attr) {
+  return function(p,v) {
+    --p.count
+    p.sum -= v[attr];
+    p.avg = p.count ? p.sum/p.count : 0;
+    return p;
+  };
+}
+function reduceInitAvg() {
+  return {count:0, sum:0, avg:0};
+}
+    
+    
+    
 var chartLapsTimeScale = d3.time.second;
 var chartLapsTimeDim = facts.dimension(function(d) { return chartLapsTimeScale(d['Time Parsed']); });
-var chartLapsTimeGroup = chartLapsTimeDim.group().reduceSum(function(d) { return d['Heart Rate']; });
+var chartLapsTimeGroup = chartLapsTimeDim.group()//.reduceSum(function(d) { return d['Heart Rate']; });
+
+  .reduce(reduceAddAvg('Heart Rate'), reduceRemoveAvg('Heart Rate'), reduceInitAvg);
+
 var chartLapsTimeXScale = d3.time.scale()
   .domain(d3.extent(chartLapsTimeGroup.all(), function(d) { return d.key; }));
     
 chartLapsTime
+  .valueAccessor(function(d) { return d.value.avg; })
   .x(chartLapsTimeXScale)
-  .y(d3.scale.linear().domain(d3.extent(chartLapsTimeGroup.all(), function(d) { return d.value; })))
+  .y(d3.scale.linear().domain(
+    d3.extent(chartLapsTimeGroup.all(), function(d) { return chartLapsTime.valueAccessor()(d); })))
   .dimension(chartLapsTimeDim)
   .group(chartLapsTimeGroup)
   .xAxis().tickValues(chartLapsTimeXScale.ticks(d3.time.minute, 5));
