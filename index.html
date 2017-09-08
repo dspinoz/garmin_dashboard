@@ -386,7 +386,13 @@ function reduceInitAvg() {
     
     
 var chartLapsTimeScale = d3.time.second;
-var chartLapsTimeDim = facts.dimension(function(d) { return chartLapsTimeScale(d['Time Parsed']); });
+var interval = 5;
+var chartLapsTimeDim = facts.dimension(function(d) { 
+    var date = d['Time Parsed'];
+    var subHalf = chartLapsTimeScale.offset(date, -1 * interval / 2);
+    var addHalf = chartLapsTimeScale.offset(date, interval / 2);
+    return chartLapsTimeScale.range(subHalf, addHalf, interval)[0];
+});
 var chartLapsTimeGroup = chartLapsTimeDim.group()//.reduceSum(function(d) { return d['Heart Rate']; });
 
   .reduce(reduceAddAvg('Heart Rate'), reduceRemoveAvg('Heart Rate'), reduceInitAvg);
