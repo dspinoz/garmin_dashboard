@@ -359,16 +359,18 @@ var xmlDoc;
     facts.add(data);
     
     
-    
-var chartLapsTimeDim = facts.dimension(function(d) { return d['Time Parsed']; });
+var chartLapsTimeScale = d3.time.second;
+var chartLapsTimeDim = facts.dimension(function(d) { return chartLapsTimeScale(d['Time Parsed']); });
 var chartLapsTimeGroup = chartLapsTimeDim.group().reduceSum(function(d) { return d['Heart Rate']; });
+var chartLapsTimeXScale = d3.time.scale()
+  .domain(d3.extent(chartLapsTimeGroup.all(), function(d) { return d.key; }));
     
 chartLapsTime
-  .x(d3.time.scale()
-    .domain(d3.extent(chartLapsTimeGroup.all(), function(d) { return d.key; })))
+  .x(chartLapsTimeXScale)
   .y(d3.scale.linear().domain(d3.extent(chartLapsTimeGroup.all(), function(d) { return d.value; })))
   .dimension(chartLapsTimeDim)
-  .group(chartLapsTimeGroup);
+  .group(chartLapsTimeGroup)
+  .xAxis().tickValues(chartLapsTimeXScale.ticks(d3.time.minute, 5));
     
     
     
