@@ -192,9 +192,10 @@
         <div class="col-sm-4">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title">C</h3>
+              <h3 class="panel-title">Distance / Time</h3>
             </div>
             <div class="panel-body">
+              <div id="chart-distance-time"></div>
             </div>
           </div>
         </div>
@@ -257,7 +258,7 @@ var dataTableOptions = {
     },
     {
       targets: 2,
-      data: function(d) { return d['Distance']; }
+      data: function(d) { return d['Distance Diff']; }
     },
     {
       targets: 3,
@@ -282,6 +283,7 @@ var dataTableOptions = {
 var dataTable = $("#data-table").dataTable(dataTableOptions);
 var chartLaps = dc.pieChart("#chart-laps");
 var chartLapsTime = dc.lineChart("#chart-laps-time");
+var chartDistanceTime = dc.lineChart("#chart-distance-time");
 
 function RefreshTable() {
   dc.events.trigger(function () {
@@ -300,6 +302,17 @@ function RefreshTable() {
     chartLapsTimeYScale.domain(
       d3.extent(chartLapsTimeGroup.all(), 
         function(d) { return chartLapsTime.valueAccessor()(d); })); 
+      
+    chartDistanceTimeXScale.domain(
+      d3.extent(chartDistanceTimeGroup.all(), 
+        function(d) { return chartDistanceTime.keyAccessor()(d); }));
+    
+    chartDistanceTimeYScale.domain(
+      d3.extent(chartDistanceTimeGroup.all(), 
+        function(d) { return chartDistanceTime.valueAccessor()(d); })); 
+        
+        
+        
   });
 }
 
@@ -357,6 +370,8 @@ var xmlDoc;
   var timeParser = d3.time.format.iso;
   var firstTime = -1;
   
+  var lastDistance = -1;
+  
   var data = rows.map(function(d) {
     
     var cols = d.split(',');
@@ -377,6 +392,18 @@ var xmlDoc;
       
       if (i == 4 && header[i] == 'Heart Rate') {
         accum['Heart Rate'] = +val;
+      }
+      
+      if (i == 5 && header[i] == 'Distance') {
+        accum['Distance'] = +val;
+        
+        if (lastDistance < 0) {
+          lastDistance = accum['Distance'];
+        }
+        
+        accum['Distance Diff'] = accum['Distance'] - lastDistance;
+        
+        lastDistance = accum['Distance'];
       }
       
       return accum;
@@ -431,6 +458,7 @@ function nonzero_min(chart) {
 var chartLapsTimeScale = d3.time.second;
 var interval = 5;
 var chartLapsTimeDim = facts.dimension(function(d) { return d['Time Diff']; });
+var chartDistanceTimeDim = facts.dimension(function(d) { return d['Time Diff']; });
   
 function date_to_interval(d) {
     var date = d['Time Parsed'];
@@ -438,21 +466,25 @@ function date_to_interval(d) {
     var addHalf = chartLapsTimeScale.offset(date, interval / 2);
     return chartLapsTimeScale.range(subHalf, addHalf, interval)[0];
 };
+
 var chartLapsTimeGroup = chartLapsTimeDim.group()//.reduceSum(function(d) { return d['Heart Rate']; });
 
   .reduce(reduceAddAvg('Heart Rate'), reduceRemoveAvg('Heart Rate'), reduceInitAvg);
   
-function remove_empty_bins(source_group) {
+  
+var chartDistanceTimeGroup = chartDistanceTimeDim.group().reduceSum(function(d) { return d['Distance Diff']; });
+  
+function remove_empty_bins(chart, group) {
   return {
     all:function () {
-      return source_group.all().filter(function(d) {
-        return chartLapsTime.valueAccessor()(d) != 0;
+      return group.all().filter(function(d) {
+        return chart.valueAccessor()(d) != 0;
       });
     }
   };
 }
-chartLapsTimeGroup = remove_empty_bins(chartLapsTimeGroup);
-  
+chartLapsTimeGroup = remove_empty_bins(chartLapsTime, chartLapsTimeGroup);
+chartDistanceTimeGroup = remove_empty_bins(chartDistanceTime, chartDistanceTimeGroup);
 
 var chartLapsTimeXScale = d3.scale.linear()
     .domain(
@@ -476,6 +508,26 @@ nonzero_min(chartLapsTime)
   .xAxis().tickFormat(format_sec_to_time).ticks(7);
     
     
+var chartDistanceTimeXScale = d3.scale.linear()
+    .domain(
+      d3.extent(chartDistanceTimeGroup.all(), 
+        function(d) { return chartDistanceTime.keyAccessor()(d); }));
+    
+var chartDistanceTimeYScale = d3.scale.linear()
+  .domain(
+    d3.extent(chartDistanceTimeGroup.all(), 
+      function(d) { return chartDistanceTime.valueAccessor()(d); })); 
+    
+nonzero_min(chartDistanceTime)
+  .keyAccessor(function(d) { return d.key; })
+  .valueAccessor(function(d) { return d.value; })
+  .x(chartDistanceTimeXScale)
+  .elasticX(true)
+  .y(chartDistanceTimeYScale)
+  .elasticY(true)
+  .dimension(chartDistanceTimeDim)
+  .group(chartDistanceTimeGroup)
+  .xAxis().tickFormat(format_sec_to_time).ticks(7);
     
     console.log('renderall');
     
