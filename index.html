@@ -224,6 +224,18 @@
     
 var facts = crossfilter();
 
+function format_sec_to_time(sec_num) {
+    
+  var hours   = Math.floor(sec_num / 3600);
+  var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+  var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+  if (hours != 0 && hours   < 10) {hours   = "0"+hours+":";} else { hours = ""; }
+  if (minutes < 10) {minutes = "0"+minutes;}
+  if (seconds < 10) {seconds = "0"+seconds;}
+  return hours + minutes+':'+seconds;
+}
+
 var dataTableOptions = {
   "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
   "footerCallback": function ( row, data, start, end, display ) {
@@ -237,7 +249,7 @@ var dataTableOptions = {
   columnDefs: [
     {
       targets: 0,
-      data: function(d) { return d['Time']; }
+      data: function(d) { return format_sec_to_time(d['Time Diff']); }
     },
     {
       targets: 1,
@@ -343,6 +355,7 @@ var xmlDoc;
   
   // eg. 2011-09-07T02:44:10.000Z
   var timeParser = d3.time.format.iso;
+  var firstTime = -1;
   
   var data = rows.map(function(d) {
     
@@ -354,6 +367,12 @@ var xmlDoc;
       
       if (i == 1 && header[i] == 'Time') {
         accum['Time Parsed'] = timeParser.parse(val);
+        
+        if (firstTime < 0) {
+          firstTime = accum['Time Parsed'].getTime();
+        }
+        
+        accum['Time Diff'] = (accum['Time Parsed'].getTime() - firstTime) / 1000;
       }
       
       if (i == 4 && header[i] == 'Heart Rate') {
@@ -411,12 +430,14 @@ function nonzero_min(chart) {
     
 var chartLapsTimeScale = d3.time.second;
 var interval = 5;
-var chartLapsTimeDim = facts.dimension(function(d) { 
+var chartLapsTimeDim = facts.dimension(function(d) { return d['Time Diff']; });
+  
+function date_to_interval(d) {
     var date = d['Time Parsed'];
     var subHalf = chartLapsTimeScale.offset(date, -1 * interval / 2);
     var addHalf = chartLapsTimeScale.offset(date, interval / 2);
     return chartLapsTimeScale.range(subHalf, addHalf, interval)[0];
-});
+};
 var chartLapsTimeGroup = chartLapsTimeDim.group()//.reduceSum(function(d) { return d['Heart Rate']; });
 
   .reduce(reduceAddAvg('Heart Rate'), reduceRemoveAvg('Heart Rate'), reduceInitAvg);
@@ -433,7 +454,7 @@ function remove_empty_bins(source_group) {
 chartLapsTimeGroup = remove_empty_bins(chartLapsTimeGroup);
   
 
-var chartLapsTimeXScale = d3.time.scale()
+var chartLapsTimeXScale = d3.scale.linear()
     .domain(
       d3.extent(chartLapsTimeGroup.all(), 
         function(d) { return chartLapsTime.keyAccessor()(d); }));
@@ -444,6 +465,7 @@ var chartLapsTimeYScale = d3.scale.linear()
       function(d) { return chartLapsTime.valueAccessor()(d); })); 
     
 nonzero_min(chartLapsTime)
+  .keyAccessor(function(d) { return d.key; })
   .valueAccessor(function(d) { return d.value.avg; })
   .x(chartLapsTimeXScale)
   .elasticX(true)
@@ -451,7 +473,7 @@ nonzero_min(chartLapsTime)
   .elasticY(true)
   .dimension(chartLapsTimeDim)
   .group(chartLapsTimeGroup)
-  .xAxis().tickValues(chartLapsTimeXScale.ticks(d3.time.minute, 5));
+  .xAxis().tickFormat(format_sec_to_time).ticks(7);
     
     
     
