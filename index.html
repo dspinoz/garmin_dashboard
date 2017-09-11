@@ -273,12 +273,21 @@ var chartLapsTime = dc.lineChart("#chart-laps-time");
 
 function RefreshTable() {
   dc.events.trigger(function () {
+    
     dataTable.api()
       .clear()
       .rows.add(facts.dimension(function (d) {
                   return d.eid;
                 }).top(Infinity))
-      .draw() ;
+      .draw();
+      
+    chartLapsTimeXScale.domain(
+      d3.extent(chartLapsTimeGroup.all(), 
+        function(d) { return chartLapsTime.keyAccessor()(d); }));
+    
+    chartLapsTimeYScale.domain(
+      d3.extent(chartLapsTimeGroup.all(), 
+        function(d) { return chartLapsTime.valueAccessor()(d); })); 
   });
 }
 
@@ -382,7 +391,22 @@ function reduceRemoveAvg(attr) {
 function reduceInitAvg() {
   return {count:0, sum:0, avg:0};
 }
-    
+
+//https://github.com/dc-js/dc.js/issues/667
+function nonzero_min(chart) {
+  dc.override(chart, 'yAxisMin', function () {
+    var min = d3.min(chart.data(), function (layer) {
+      return d3.min(
+        layer.values.filter(function(p) { return p.y != 0; }), 
+        function (p) {
+          return p.y + p.y0;
+        });
+    });
+    return dc.utils.subtract(min, chart.yAxisPadding());
+  });
+  
+  return chart;
+}    
     
     
 var chartLapsTimeScale = d3.time.second;
@@ -398,17 +422,24 @@ var chartLapsTimeGroup = chartLapsTimeDim.group()//.reduceSum(function(d) { retu
   .reduce(reduceAddAvg('Heart Rate'), reduceRemoveAvg('Heart Rate'), reduceInitAvg);
 
 var chartLapsTimeXScale = d3.time.scale()
-  .domain(d3.extent(chartLapsTimeGroup.all(), function(d) { return d.key; }));
+    .domain(
+      d3.extent(chartLapsTimeGroup.all(), 
+        function(d) { return chartLapsTime.keyAccessor()(d); }));
     
-chartLapsTime
+var chartLapsTimeYScale = d3.scale.linear()
+  .domain(
+    d3.extent(chartLapsTimeGroup.all(), 
+      function(d) { return chartLapsTime.valueAccessor()(d); })); 
+    
+nonzero_min(chartLapsTime)
   .valueAccessor(function(d) { return d.value.avg; })
   .x(chartLapsTimeXScale)
-  .y(d3.scale.linear().domain(
-    d3.extent(chartLapsTimeGroup.all(), function(d) { return chartLapsTime.valueAccessor()(d); })))
+  .elasticX(true)
+  .y(chartLapsTimeYScale)
+  .elasticY(true)
   .dimension(chartLapsTimeDim)
   .group(chartLapsTimeGroup)
   .xAxis().tickValues(chartLapsTimeXScale.ticks(d3.time.minute, 5));
-    
     
     
     
