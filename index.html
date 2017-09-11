@@ -420,6 +420,18 @@ var chartLapsTimeDim = facts.dimension(function(d) {
 var chartLapsTimeGroup = chartLapsTimeDim.group()//.reduceSum(function(d) { return d['Heart Rate']; });
 
   .reduce(reduceAddAvg('Heart Rate'), reduceRemoveAvg('Heart Rate'), reduceInitAvg);
+  
+function remove_empty_bins(source_group) {
+  return {
+    all:function () {
+      return source_group.all().filter(function(d) {
+        return chartLapsTime.valueAccessor()(d) != 0;
+      });
+    }
+  };
+}
+chartLapsTimeGroup = remove_empty_bins(chartLapsTimeGroup);
+  
 
 var chartLapsTimeXScale = d3.time.scale()
     .domain(
