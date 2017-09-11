@@ -210,9 +210,6 @@
                 <th>Lap</th>
                 <th>Distance</th>
                 <th>Heart Rate</th>
-                <th>Latitude</th>
-                <th>Longitude</th>
-                <th>Altitude</th>
               </tr>
             </thead>
           </table>
@@ -263,7 +260,7 @@ var dataTableOptions = {
     {
       targets: 3,
       data: function(d) { return d['Heart Rate']; }
-    },
+    }/*,
     {
       targets: 4,
       data: function(d) { return d['Position Lat']; }
@@ -275,7 +272,7 @@ var dataTableOptions = {
     {
       targets: 6,
       data: function(d) { return d['Altitude']; }
-    }
+    }*/
   ]
 } ;
 
@@ -410,10 +407,22 @@ var xmlDoc;
     }, {});
   });
   
+  data = data.map(function(v) {
+    var d = {};
+    d['Lap'] = +v['Lap'];
+    d['Time Diff'] = v['Time Diff'];
+    d['Distance Diff'] = v['Distance Diff'];
+    d['Heart Rate'] = v['Heart Rate'];
+    return d;
+  });
+  
   
   //d3.select('body').append('p').attr('class','error').text(JSON.stringify(data.shift()));
 
-    console.log('data[0]', data[0]);
+    data.forEach(function(d,i) {
+      console.log(i,data.length,d);
+    });
+
 
     facts.add(data);
     
