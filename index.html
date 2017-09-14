@@ -219,7 +219,7 @@
     </div><!-- /.container -->
 
     <script>
-    
+    try{
 var facts = crossfilter();
 
 function format_sec_to_time(sec_num) {
@@ -324,7 +324,7 @@ for (var i = 0; i < dc.chartRegistry.list().length; i++) {
   chartI.on("filtered", RefreshTable);
 }
 
-var chartLapsDim = facts.dimension(function(d) { debug_data_value(d['Lap'],'chartLapsDim', d); return d['Lap']; });
+var chartLapsDim = facts.dimension(function(d) { debug_data_value(d['Lap'],'chartLapsDim', d); return d['Lap'] ? d['Lap'] : 0; });
 
 chartLaps
   .innerRadius(30)
@@ -416,9 +416,14 @@ var xmlDoc;
   data = data.map(function(v) {
     var d = {};
     d['Lap'] = +v['Lap'];
-    d['Time Diff'] = v['Time Diff'];
-    d['Distance Diff'] = v['Distance Diff'];
-    d['Heart Rate'] = v['Heart Rate'];
+    d['Time Diff'] = +v['Time Diff'];
+    d['Distance Diff'] = +v['Distance Diff'];
+    d['Heart Rate'] = +v['Heart Rate'];
+    
+    debug_data_value(d['Lap'], 'LAP', d);
+    debug_data_value(d['Time DIff'], 'TIME', d);
+    debug_data_value(d['Distance DIff'], 'DIST', d);
+    debug_data_value(d['Heart Rate'], 'HR', d);
     return d;
   });
   
@@ -470,8 +475,12 @@ function nonzero_min(chart) {
     
 var chartLapsTimeScale = d3.time.second;
 var interval = 5;
-var chartLapsTimeDim = facts.dimension(function(d) { debug_data_value(d['Time Diff'],'chartLapsTimeDIm', d); return d['Time Diff']; });
-var chartDistanceTimeDim = facts.dimension(function(d) { debug_data_value(d['Time Diff'],'chartDistanceTimDim', d); return d['Time Diff']; });
+var chartLapsTimeDim = facts.dimension(function(d) { 
+  debug_data_value(d['Time Diff'],'chartLapsTimeDIm', d); 
+  return d['Time Diff'] ? d['Time Diff'] : 0; });
+var chartDistanceTimeDim = facts.dimension(function(d) { 
+  debug_data_value(d['Time Diff'],'chartDistanceTimDim', d); 
+  return d['Time Diff'] ? d['Time Diff'] : 0; });
   
 function date_to_interval(d) {
     var date = d['Time Parsed'];
@@ -487,7 +496,7 @@ var chartLapsTimeGroup = chartLapsTimeDim.group()//.reduceSum(function(d) { retu
   
 var chartDistanceTimeGroup = chartDistanceTimeDim.group().reduceSum(function(d) { 
   debug_data_value(d['Distance Diff'],'chartDistanceTimeGroup',d); 
-  return d['Distance Diff']; 
+  return d['Distance Diff'] ? d['Distance Diff'] : 0;
 });
   
 function remove_empty_bins(chart, group) {
@@ -625,7 +634,9 @@ d3.csv("/data.csv",
   });
 
 */
-
+} catch (e) {
+  console.log("ERROR",e);
+}
     </script>
   </body>
 </html>
