@@ -234,6 +234,12 @@ function format_sec_to_time(sec_num) {
   return hours + minutes+':'+seconds;
 }
 
+function debug_data_value(d, msg, v) {
+  if (d === null || d === undefined || isNaN(d)) {
+    console.log('invalid data!',(d === null ? 'NULL' : (d === undefined ? "UNDEFINED" : (isNaN(d) ? "NAN" : "VALID"))),msg,v);
+  }
+}
+
 var dataTableOptions = {
   "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
   "footerCallback": function ( row, data, start, end, display ) {
@@ -318,7 +324,7 @@ for (var i = 0; i < dc.chartRegistry.list().length; i++) {
   chartI.on("filtered", RefreshTable);
 }
 
-var chartLapsDim = facts.dimension(function(d) { return d['Lap']; });
+var chartLapsDim = facts.dimension(function(d) { debug_data_value(d['Lap'],'chartLapsDim', d); return d['Lap']; });
 
 chartLaps
   .innerRadius(30)
@@ -419,7 +425,7 @@ var xmlDoc;
   
   //d3.select('body').append('p').attr('class','error').text(JSON.stringify(data.shift()));
   
-    console.log('data[0]', data[0]);
+    console.log(data.length, 'data[0]', data[0]);
 
 
     facts.add(data);
@@ -464,8 +470,8 @@ function nonzero_min(chart) {
     
 var chartLapsTimeScale = d3.time.second;
 var interval = 5;
-var chartLapsTimeDim = facts.dimension(function(d) { return d['Time Diff']; });
-var chartDistanceTimeDim = facts.dimension(function(d) { return d['Time Diff']; });
+var chartLapsTimeDim = facts.dimension(function(d) { debug_data_value(d['Time Diff'],'chartLapsTimeDIm', d); return d['Time Diff']; });
+var chartDistanceTimeDim = facts.dimension(function(d) { debug_data_value(d['Time Diff'],'chartDistanceTimDim', d); return d['Time Diff']; });
   
 function date_to_interval(d) {
     var date = d['Time Parsed'];
@@ -479,7 +485,10 @@ var chartLapsTimeGroup = chartLapsTimeDim.group()//.reduceSum(function(d) { retu
   .reduce(reduceAddAvg('Heart Rate'), reduceRemoveAvg('Heart Rate'), reduceInitAvg);
   
   
-var chartDistanceTimeGroup = chartDistanceTimeDim.group().reduceSum(function(d) { return d['Distance Diff']; });
+var chartDistanceTimeGroup = chartDistanceTimeDim.group().reduceSum(function(d) { 
+  debug_data_value(d['Distance Diff'],'chartDistanceTimeGroup',d); 
+  return d['Distance Diff']; 
+});
   
 function remove_empty_bins(chart, group) {
   return {
