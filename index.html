@@ -293,9 +293,7 @@ function RefreshTable() {
     
     dataTable.api()
       .clear()
-      .rows.add(facts.dimension(function (d) {
-                  return d.eid;
-                }).top(Infinity))
+      .rows.add(facts.allFiltered())
       .draw();
       
     chartLapsTimeXScale.domain(
@@ -413,12 +411,15 @@ var xmlDoc;
     }, {});
   });
   
-  data = data.map(function(v) {
+  data = data.map(function(v,i) {
     var d = {};
+    d['Id'] = i;
     d['Lap'] = +v['Lap'];
     d['Time Diff'] = +v['Time Diff'];
     d['Distance Diff'] = +v['Distance Diff'];
     d['Heart Rate'] = +v['Heart Rate'];
+    
+    d['Distance Diff'] = +d['Distance Diff'].toFixed(5);
     
     debug_data_value(d['Lap'], 'LAP', d);
     debug_data_value(d['Time Diff'], 'TIME', d);
@@ -433,7 +434,7 @@ var xmlDoc;
     console.log(data.length, 'data[0]', data[0]);
 
 
-    facts.add(data);
+    //facts.add(data);
     
     
 function reduceAddAvg(attr) {
@@ -565,6 +566,33 @@ nonzero_min(chartDistanceTime)
 
 
 
+var interval = setInterval(load_data, 250, data);
+var count = 0;
+
+function load_data(data) {
+  var to_add = data.splice(0, 250);
+  //console.log(new Date(), ++count, to_add);
+  
+  if (!to_add.length) 
+  {
+    clearInterval(interval);
+    console.log('done');
+    return;
+  }
+  
+  /*if (count >= 200) {
+      console.log("ERROR!?");
+      clearInterval(interval);
+      to_add.forEach(function(d) { 
+        console.log(d);
+      });
+  }*/
+  
+  facts.add(to_add);
+  RefreshTable();
+  dc.redrawAll();
+  
+}
 
 
 
