@@ -14,6 +14,11 @@ def bower_components(path):
 def index():
   return static_file('index.html', root='.')
 
+@route('/index2.html')
+def index2():
+  return static_file('index2.html', root='.')
+
+
 @route('/tcx_parser.js')
 def tcx_parser():
   return static_file('tcx_parser.js', root='.')
@@ -25,6 +30,10 @@ def tcx_to_csv():
 @route('/tcx.xml')
 def tcx():
   return static_file('tcx.xml', root='.')
+  
+@route('/activities.csv')
+def activities():
+  return static_file('activities.csv', root='.')
 
 run(host='localhost', port=8000)
 
