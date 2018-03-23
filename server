@@ -1,55 +1,31 @@
 #!/usr/bin/env python
-import sys
-import BaseHTTPServer
-import re
-import mimetypes
-import sqlite3
-import os.path
-import os
-import csv
 
-PORT_NUMBER=8000
+from bottle import route, run, template, static_file
 
-transactions = re.compile('^data.csv$')
+@route('/hello/<name>')
+def index(name):
+    return template('<b>Hello {{name}}</b>!', name=name)
 
-class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
-  def do_GET(s):
-    p = s.path[1:] #remove slash from front of url
-    try:
-      f = open(p)
-      
-      s.send_response(200)
-      s.send_header("Content-type", mimetypes.MimeTypes().guess_type(p)[0])
-      s.end_headers()
-      
-      s.wfile.write(f.read())
-      f.close()
-      
-    except IOError:
-    
-      if transactions.match(p):
-        
-        items = os.listdir('data')
-        
-        s.wfile.write('name,\n')
-        
-        for i in items:
-        
-          s.wfile.write('data' + os.path.sep + i)
-          s.wfile.write(',')
-          s.wfile.write('\n')
-            
-        
-      else:
-        s.send_error(404, 'File not found')
+@route('/bower_components/<path:path>')
+def bower_components(path):
+  return static_file(path, root='./bower_components')
 
-if __name__ == '__main__':
-  srv = BaseHTTPServer.HTTPServer
-  httpd = srv(('', PORT_NUMBER), Handler)
-  print "Server started"
-  try:
-    httpd.serve_forever()
-  except KeyboardInterrupt:
-    pass
-  httpd.server_close()
-  print "Server stopped"
+@route('/index.html')
+def index():
+  return static_file('index.html', root='.')
+
+@route('/tcx_parser.js')
+def tcx_parser():
+  return static_file('tcx_parser.js', root='.')
+
+@route('/tcx_to_csv.xsl')
+def tcx_to_csv():
+  return static_file('tcx_to_csv.xsl', root='.')
+
+@route('/tcx.xml')
+def tcx():
+  return static_file('tcx.xml', root='.')
+
+run(host='localhost', port=8000)
+
+
