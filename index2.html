@@ -79,14 +79,35 @@
         <div class="col-sm-3">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title">Lap</h3>
+              <h3 class="panel-title">Lap <small>Distance</small></h3>
             </div>
             <div class="panel-body">
-              <div id="chart-laps"></div>
+              <div id="chart-lap-distance"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Lap <small>Time</small></h3>
+            </div>
+            <div class="panel-body">
+              <div id="chart-lap-time"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Stats</h3>
+            </div>
+            <div class="panel-body">
+              <div id="chart-stats"></div>
             </div>
           </div>
         </div>
       </div>
+      
       <div class="row">
         <div class="col-sm-6">
           <div class="panel panel-default">
@@ -129,9 +150,84 @@
 
     <script>
 try{
+
+var timeParser = d3.time.format.iso;
+var facts = crossfilter();
+
+var activityDim = facts.dimension(function(d) { return d.Activity; });
+var lapDim = facts.dimension(function(d) { return d.Lap; });
+
+var chartActivity = dc.pieChart("#chart-activity");
+var chartLapDistance = dc.pieChart("#chart-lap-distance");
+var chartLapTime = dc.pieChart("#chart-lap-time");
+var chartStats = dc.numberDisplay("#chart-stats");
+
+chartActivity
+  .width(200)
+  .innerRadius(20)
+  .dimension(activityDim)
+  .group(activityDim.group().reduceCount())
+  .valueAccessor(function(d) { return d.value; });
+  
+chartLapDistance
+  .width(200)
+  .innerRadius(20)
+  .dimension(lapDim)
+  .group(lapDim.group().reduceSum(function(d) { return d.Distance; }))
+  .valueAccessor(function(d) { return d.value; });
+  
+chartLapTime
+  .width(200)
+  .innerRadius(20)
+  .dimension(lapDim)
+  .group(lapDim.group().reduceCount()) //each entry is 1 second
+  .valueAccessor(function(d) { return d.value; });
+
+chartStats
+  .group(facts.groupAll().reduce(function(p) {
+      return p + 1;
+    }, function(p) {
+      return p - 1;
+    }, function() {
+      return 0;
+    }), function(d) {  })
+  .html({
+    one:"%number Point",
+    some:"%number Points",
+    none:"No Points"
+  })
+  .valueAccessor(function(d) { return d; });
+
+dc.renderAll();
+
+d3.csv('/activities.csv', function(activities) {
+  dc.redrawAll();
+  
+  activities.forEach(function(a) {
+    d3.csv('/activities/'+a.File, function(d) {
+      d.Lap = +d.Lap;
+      d.Distance = +d.Distance;
+      d.Time = timeParser.parse(d.Time);
+      d.HeartRate = +d['Heart Rate'];
+      delete d['Heart Rate'];
+      return d;
+    }, function(data) {
+      console.log('activity',a,data);
+      
+      data.map(function(d) {
+        d.Activity = a.Name;
+        d.ActivityLength = a.Length;
+        return d;
+      });
+      
+      facts.add(data);
+      dc.redrawAll();
+    });
+  });
   
   
-  
+});
+
   
 } catch (e) {
   console.log("ERROR",e);

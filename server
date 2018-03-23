@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
-from bottle import route, run, template, static_file
+import lxml.etree as ET
+from bottle import route, run, template, static_file, response
+
+xslt = ET.parse('tcx_to_csv.xsl')
+transform = ET.XSLT(xslt)
 
 @route('/hello/<name>')
 def index(name):
@@ -10,6 +14,12 @@ def index(name):
 def bower_components(path):
   return static_file(path, root='./bower_components')
 
+@route('/activities/<path:path>')
+def activities_tcx(path):
+  dom = ET.parse('./activities/%s' %(path))
+  response.content_type = 'text/text'
+  return str(transform(dom))
+
 @route('/index.html')
 def index():
   return static_file('index.html', root='.')
@@ -17,7 +27,6 @@ def index():
 @route('/index2.html')
 def index2():
   return static_file('index2.html', root='.')
-
 
 @route('/tcx_parser.js')
 def tcx_parser():
