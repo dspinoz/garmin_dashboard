@@ -81,20 +81,21 @@
         <div class="col-sm-3">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title">Lap <small>Distance</small></h3>
+              <h3 class="panel-title">Lap <small>Distance / Time</small></h3>
             </div>
             <div class="panel-body">
               <div id="chart-lap-distance"></div>
+              <div id="chart-lap-time"></div>
             </div>
           </div>
         </div>
         <div class="col-sm-3">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title">Lap <small>Time</small></h3>
+              <h3 class="panel-title">Lap <small>Type</small></h3>
             </div>
             <div class="panel-body">
-              <div id="chart-lap-time"></div>
+              <div id="chart-lap-type"></div>
             </div>
           </div>
         </div>
@@ -162,10 +163,12 @@ var facts = crossfilter();
 
 var activityDim = facts.dimension(function(d) { return d.Activity; });
 var lapDim = facts.dimension(function(d) { return d.Lap; });
+var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
 
 var chartActivity = dc.pieChart("#chart-activity");
 var chartLapDistance = dc.pieChart("#chart-lap-distance");
 var chartLapTime = dc.pieChart("#chart-lap-time");
+var chartLapType = dc.pieChart("#chart-lap-type");
 var chartPointsCount = dc.numberDisplay("#chart-stats-points");
 var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
 var chartTotalTime = dc.numberDisplay("#chart-stats-time");
@@ -192,6 +195,16 @@ chartLapTime
   .innerRadius(20)
   .dimension(lapDim)
   .group(lapDim.group().reduceSum(function(d) { return d.TimePoint; }))
+  .valueAccessor(function(d) { return d.value; })
+  .title(function(d) {
+    return d.key + ": " + formatSeconds(d3.round(d.value / 1000));
+  });
+
+chartLapType
+  .width(200)
+  .innerRadius(20)
+  .dimension(lapTypeDim)
+  .group(lapTypeDim.group().reduceCount())
   .valueAccessor(function(d) { return d.value; });
 
 chartPointsCount
@@ -225,21 +238,68 @@ d3.csv('/activities.csv', function(activities) {
   dc.redrawAll();
   
   activities.forEach(function(a,i) {
+    
+    // length represents the type of workout, in minutes
+    var lenRegex = /^([0-9]+)\-([0-9]+)\-([0-9]+)$/g;
+    var lenMatch = lenRegex.exec(a.Length);
+    if (lenMatch != null) {
+      var start = 0;
+      var lenWarmup = +lenMatch[1]*60*1000;
+      var lenWorkout = +lenMatch[2]*60*1000;
+      var lenCooldown = +lenMatch[3]*60*1000;
+      
+      var warmupEnd = start + lenWarmup;
+      var workoutEnd = warmupEnd + lenWorkout;
+      var cooldownEnd = workoutEnd + lenCooldown;
+      
+      a.Length = {
+        Warmup: [0, warmupEnd], 
+        Workout: [warmupEnd, workoutEnd], 
+        CoolDown: [workoutEnd,cooldownEnd]};
+    } else if (/^[0-9]+$/) {
+      a.Length = {Workout: [0,+a.Length*60*1000]};
+    } else {
+      console.log("Activity has invalid length " + a.Length,a);
+    }
+    
     d3.csv('/activities/'+a.File, function(d,i) {
+      
       d.Lap = +d.Lap;
       d.Distance = +d.Distance;
       d.Time = timeParser.parse(d.Time);
       d.HeartRate = +d['Heart Rate'];
       delete d['Heart Rate'];
+      
       return d;
     }, function(data) {
       console.log('activity',a,data);
       
+      var lengthKeys = d3.keys(a.Length);
+      
+      var totalTime = 0;
       data.forEach(function(d,i) {
         d.DistancePoint = i == 0 ? d.Distance : d.Distance - data[i-1].Distance;
         d.TimePoint = i == 0 ? 1000 : d.Time - data[i-1].Time;
+        
+        totalTime += d.TimePoint;
+        d.TimeAccumulative = totalTime;
+        
+        if (lengthKeys.length == 1) {
+          d.LapType = lengthKeys[0];
+        } else if (lengthKeys.length == 3) {
+          lengthKeys.forEach(function(k) {
+            if (d.TimeAccumulative >= a.Length[k][0] &&
+                d.TimeAccumulative <= a.Length[k][1]) {
+              d.LapType = k;
+            }
+          });
+          if (!d.LapType) {
+            d.LapType = "Unknown";
+          }
+        } else {
+          d.LapType = "Unknown";
+        }
       });
-      
       
       data.map(function(d) {
         d.Activity = a.Name;
