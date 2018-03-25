@@ -102,8 +102,10 @@
               <h3 class="panel-title">Stats</h3>
             </div>
             <div class="panel-body">
-              <div id="chart-stats"></div>
-              <div id="chart-stats-distance"></div>
+              <table class="table table-condensed">
+                <tr><th>Points</th><td id="chart-stats"></td></tr>
+                <tr><th>Distance</th><td id="chart-stats-distance"></td></tr>
+              </table>
             </div>
           </div>
         </div>
@@ -193,20 +195,18 @@ chartStats
     }, function() {
       return 0;
     }))
-  .html({
-    one:"%number Point",
-    some:"%number Points",
-    none:"No Points"
-  })
+  .formatNumber(d3.round)
   .valueAccessor(function(d) { return d; });
   
 chartTotalDistance
   .group(facts.groupAll().reduceSum(function(d) { return d.DistancePoint; }))
-  .formatNumber(d3.format(".3s"))
+  .formatNumber(function(d) {
+    return d3.round(d / 1000,2); 
+  })
   .html({
-    one:"%number",
-    some:"%number",
-    none:"0k"
+    one:"%number km",
+    some:"%number km",
+    none:"0 km"
   })
   .valueAccessor(function(d) { return d; });
 
