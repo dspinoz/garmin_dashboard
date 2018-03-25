@@ -159,7 +159,6 @@ try{
 
 var timeParser = d3.time.format.iso;
 var facts = crossfilter();
-var all = facts.groupAll();
 
 var activityDim = facts.dimension(function(d) { return d.Activity; });
 var lapDim = facts.dimension(function(d) { return d.Lap; });
@@ -183,17 +182,20 @@ chartLapDistance
   .innerRadius(20)
   .dimension(lapDim)
   .group(lapDim.group().reduceSum(function(d) { return d.DistancePoint; }))
-  .valueAccessor(function(d) { return d.value; });
+  .valueAccessor(function(d) { return d.value; })
+  .title(function(d) {
+    return d.key + ": " + d3.round(d.value / 1000) + " km";
+  });
   
 chartLapTime
   .width(200)
   .innerRadius(20)
   .dimension(lapDim)
-  .group(lapDim.group().reduceCount()) //each entry is 1 second
+  .group(lapDim.group().reduceSum(function(d) { return d.TimePoint; }))
   .valueAccessor(function(d) { return d.value; });
 
 chartPointsCount
-  .group(all.reduce(function(p) {
+  .group(facts.groupAll().reduce(function(p) {
       return p + 1;
     }, function(p) {
       return p - 1;
@@ -204,21 +206,15 @@ chartPointsCount
   .valueAccessor(function(d) { return d; });
   
 chartTotalDistance
-  .group(all.reduceSum(function(d) { return d.DistancePoint; }))
+  .group(facts.groupAll().reduceSum(function(d) { return d.DistancePoint; }))
   .formatNumber(function(d) {
-    return d3.round(d / 1000,2); 
-  })
-  .html({
-    one:"%number km",
-    some:"%number km",
-    none:"0 km"
+    return d3.round(d / 1000,2) + " km";
   })
   .valueAccessor(function(d) { return d; });
   
 chartTotalTime
-  .group(all.reduceSum(function(d) { return d.TimePoint; }))
+  .group(facts.groupAll().reduceSum(function(d) { return d.TimePoint; }))
   .formatNumber(function(d) {
-    console.log('aaa',d);
     return formatSeconds(d3.round(d / 1000));
   })
   .valueAccessor(function(d) { return d; });
