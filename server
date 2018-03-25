@@ -32,6 +32,10 @@ def index2():
 def tcx_parser():
   return static_file('tcx_parser.js', root='.')
 
+@route('/utils.js')
+def tcx_parser():
+  return static_file('utils.js', root='.')
+  
 @route('/tcx_to_csv.xsl')
 def tcx_to_csv():
   return static_file('tcx_to_csv.xsl', root='.')

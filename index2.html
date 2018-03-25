@@ -43,6 +43,8 @@
     <script src='/bower_components/datatables/media/js/dataTables.bootstrap.js' type='text/javascript'></script>
     <link href='/bower_components/datatables/media/css/dataTables.bootstrap.css' rel='stylesheet' type='text/css'>
     <script src='/bower_components/cubism/cubism.v1.js' type='text/javascript'></script>
+    
+    <script src='/utils.js' type='text/javascript'></script>
   </head>
 
   <body>
@@ -105,6 +107,7 @@
               <table class="table table-condensed">
                 <tr><th>Points</th><td id="chart-stats-points"></td></tr>
                 <tr><th>Distance</th><td id="chart-stats-distance"></td></tr>
+                <tr><th>Time</th><td id="chart-stats-time"></td></tr>
               </table>
             </div>
           </div>
@@ -166,6 +169,7 @@ var chartLapDistance = dc.pieChart("#chart-lap-distance");
 var chartLapTime = dc.pieChart("#chart-lap-time");
 var chartPointsCount = dc.numberDisplay("#chart-stats-points");
 var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
+var chartTotalTime = dc.numberDisplay("#chart-stats-time");
 
 chartActivity
   .width(200)
@@ -210,6 +214,14 @@ chartTotalDistance
     none:"0 km"
   })
   .valueAccessor(function(d) { return d; });
+  
+chartTotalTime
+  .group(all.reduceSum(function(d) { return d.TimePoint; }))
+  .formatNumber(function(d) {
+    console.log('aaa',d);
+    return formatSeconds(d3.round(d / 1000));
+  })
+  .valueAccessor(function(d) { return d; });
 
 dc.renderAll();
 
@@ -229,6 +241,7 @@ d3.csv('/activities.csv', function(activities) {
       
       data.forEach(function(d,i) {
         d.DistancePoint = i == 0 ? d.Distance : d.Distance - data[i-1].Distance;
+        d.TimePoint = i == 0 ? 1000 : d.Time - data[i-1].Time;
       });
       
       
