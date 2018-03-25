@@ -103,7 +103,7 @@
             </div>
             <div class="panel-body">
               <table class="table table-condensed">
-                <tr><th>Points</th><td id="chart-stats"></td></tr>
+                <tr><th>Points</th><td id="chart-stats-points"></td></tr>
                 <tr><th>Distance</th><td id="chart-stats-distance"></td></tr>
               </table>
             </div>
@@ -156,6 +156,7 @@ try{
 
 var timeParser = d3.time.format.iso;
 var facts = crossfilter();
+var all = facts.groupAll();
 
 var activityDim = facts.dimension(function(d) { return d.Activity; });
 var lapDim = facts.dimension(function(d) { return d.Lap; });
@@ -163,7 +164,7 @@ var lapDim = facts.dimension(function(d) { return d.Lap; });
 var chartActivity = dc.pieChart("#chart-activity");
 var chartLapDistance = dc.pieChart("#chart-lap-distance");
 var chartLapTime = dc.pieChart("#chart-lap-time");
-var chartStats = dc.numberDisplay("#chart-stats");
+var chartPointsCount = dc.numberDisplay("#chart-stats-points");
 var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
 
 chartActivity
@@ -187,8 +188,8 @@ chartLapTime
   .group(lapDim.group().reduceCount()) //each entry is 1 second
   .valueAccessor(function(d) { return d.value; });
 
-chartStats
-  .group(facts.groupAll().reduce(function(p) {
+chartPointsCount
+  .group(all.reduce(function(p) {
       return p + 1;
     }, function(p) {
       return p - 1;
@@ -199,7 +200,7 @@ chartStats
   .valueAccessor(function(d) { return d; });
   
 chartTotalDistance
-  .group(facts.groupAll().reduceSum(function(d) { return d.DistancePoint; }))
+  .group(all.reduceSum(function(d) { return d.DistancePoint; }))
   .formatNumber(function(d) {
     return d3.round(d / 1000,2); 
   })
