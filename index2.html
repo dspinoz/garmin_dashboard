@@ -144,10 +144,12 @@
           <table class="table table-bordered table-hover" id="data-table">
             <thead>
               <tr>
+                <th>File</th>
+                <th>Activity</th>
                 <th>Time</th>
-                <th>Lap</th>
                 <th>Distance</th>
                 <th>Heart Rate</th>
+                <th>Section</th>
               </tr>
             </thead>
           </table>
@@ -160,6 +162,7 @@
 try{
 
 var timeParser = d3.time.format.iso;
+var timeFormat = d3.time.format('%c');
 var facts = crossfilter();
 
 var filenameDim = facts.dimension(function(d) { return d.File; });
@@ -175,6 +178,61 @@ var chartLapType = dc.pieChart("#chart-lap-type");
 var chartPointsCount = dc.numberDisplay("#chart-stats-points");
 var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
 var chartTotalTime = dc.numberDisplay("#chart-stats-time");
+
+
+
+var dataTable = $("#data-table").dataTable({
+  "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
+  "footerCallback": function ( row, data, start, end, display ) {
+  },
+  "order": [[0, 'desc']],
+  "dom": 'T<"clear-l"l><"clear-l"i><"clear-r"f><"clear-r"p>t',
+  "tableTools": {
+    "sSwfPath": "copy_csv_xls_pdf.swf"
+  },
+  columnDefs: [
+    {
+      targets: 0,
+      data: function(d) { return d.File + " " + timeFormat(d.Time); }
+//return JSON.stringify(d); }
+    },
+    {
+      targets: 1,
+      data: function(d) { return d.Activity; }
+    },
+    {
+      targets: 2,
+      data: function(d) { return d.TimePoint; }
+    },
+    {
+      targets: 3,
+      data: function(d) { return d.DistancePoint; }
+    },
+    {
+      targets: 4,
+      data: function(d) { return d.HeartRate; }
+    },
+    {
+      targets: 5,
+      data: function(d) { return d.LapType; }
+    }
+  ]
+});
+
+for (var i = 0; i < dc.chartRegistry.list().length; i++) {
+  var chartI = dc.chartRegistry.list()[i];
+  chartI.on("filtered", refreshDataTable);
+}
+
+function refreshDataTable() {
+  dc.events.trigger(function () {
+    
+    dataTable.api()
+      .clear()
+      .rows.add(facts.allFiltered())
+      .draw();
+  });
+}
 
 chartActivity
   .width(200)
@@ -243,9 +301,11 @@ chartTotalTime
   .valueAccessor(function(d) { return d; });
 
 dc.renderAll();
+refreshDataTable();
 
 d3.csv('/activities.csv', function(activities) {
   dc.redrawAll();
+  refreshDataTable();
   
   activities.forEach(function(a,i) {
     
@@ -320,6 +380,7 @@ d3.csv('/activities.csv', function(activities) {
       
       facts.add(data);
       dc.redrawAll();
+      refreshDataTable();
     });
   });
   
