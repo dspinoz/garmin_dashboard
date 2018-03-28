@@ -75,6 +75,7 @@
             </div>
             <div class="panel-body">
               <div id="chart-activity"></div>
+              <div id="chart-filename"></div>
             </div>
           </div>
         </div>
@@ -161,11 +162,13 @@ try{
 var timeParser = d3.time.format.iso;
 var facts = crossfilter();
 
+var filenameDim = facts.dimension(function(d) { return d.File; });
 var activityDim = facts.dimension(function(d) { return d.Activity; });
 var lapDim = facts.dimension(function(d) { return d.Lap; });
 var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
 
 var chartActivity = dc.pieChart("#chart-activity");
+var chartFilename = dc.pieChart("#chart-filename");
 var chartLapDistance = dc.pieChart("#chart-lap-distance");
 var chartLapTime = dc.pieChart("#chart-lap-time");
 var chartLapType = dc.pieChart("#chart-lap-type");
@@ -178,6 +181,13 @@ chartActivity
   .innerRadius(20)
   .dimension(activityDim)
   .group(activityDim.group().reduceCount())
+  .valueAccessor(function(d) { return d.value; });
+  
+chartFilename
+  .width(200)
+  .innerRadius(20)
+  .dimension(filenameDim)
+  .group(filenameDim.group().reduceCount())
   .valueAccessor(function(d) { return d.value; });
   
 chartLapDistance
@@ -264,6 +274,7 @@ d3.csv('/activities.csv', function(activities) {
     
     d3.csv('/activities/'+a.File, function(d,i) {
       
+      d.File = a.File;
       d.Lap = +d.Lap;
       d.Distance = +d.Distance;
       d.Time = timeParser.parse(d.Time);
