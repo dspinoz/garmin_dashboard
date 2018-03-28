@@ -10,8 +10,13 @@ function formatSeconds(seconds) {
   var days = Math.floor((seconds % sec_week) / sec_day);
   var hours = Math.floor(((seconds % sec_week) % sec_day) / sec_hour);
   var mins = Math.floor((((seconds % sec_week) % sec_day) % sec_hour) / sec_min);
-  return (weeks ? weeks + "w " : "") +
+  var secs = Math.floor(seconds % sec_min);
+  
+  var str = (weeks ? weeks + "w " : "") +
          (days ? days + "d " : "") +
          (hours ? hours + "h " : "") +
-         (mins ? mins + "m " : "");
+         (mins ? mins + "m " : "") +
+         (secs ? secs + "s " : "");
+  
+  return str;
 }
