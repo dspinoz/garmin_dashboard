@@ -149,6 +149,7 @@
                 <th>Activity</th>
                 <th>Time</th>
                 <th>Distance</th>
+                <th>Speed</th>
                 <th>Heart Rate</th>
                 <th>Section</th>
               </tr>
@@ -212,10 +213,14 @@ var dataTable = $("#data-table").dataTable({
     },
     {
       targets: 4,
-      data: function(d) { return d.HeartRate; }
+      data: function(d) { return d3.round((d.DistancePoint/(d.TimePoint/1000))*3.6,3); }
     },
     {
       targets: 5,
+      data: function(d) { return d.HeartRate; }
+    },
+    {
+      targets: 6,
       data: function(d) { return d.LapType; }
     }
   ]
