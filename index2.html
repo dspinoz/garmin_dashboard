@@ -109,7 +109,8 @@
               <table class="table table-condensed">
                 <tr><th>Points</th><td id="chart-stats-points"></td></tr>
                 <tr><th>Distance</th><td id="chart-stats-distance"></td></tr>
-                <tr><th>Time</th><td id="chart-stats-time"></td></tr>
+                <tr><th>Elapsed Time</th><td id="chart-stats-time"></td></tr>
+                <tr><th>Moving Time</th><td id="chart-stats-mtime"></td></tr>
               </table>
             </div>
           </div>
@@ -178,6 +179,7 @@ var chartLapType = dc.pieChart("#chart-lap-type");
 var chartPointsCount = dc.numberDisplay("#chart-stats-points");
 var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
 var chartTotalTime = dc.numberDisplay("#chart-stats-time");
+var chartMovingTime = dc.numberDisplay("#chart-stats-mtime");
 
 
 
@@ -300,6 +302,16 @@ chartTotalTime
   })
   .valueAccessor(function(d) { return d; });
 
+chartMovingTime
+  .group(facts.groupAll().reduceSum(function(d) { 
+
+
+return d.LapType == "Stationary" ? 0 : d.TimePoint; }))
+  .formatNumber(function(d) {
+    return formatSeconds(d3.round(d / 1000));
+  })
+  .valueAccessor(function(d) { return d; });
+
 dc.renderAll();
 refreshDataTable();
 
@@ -347,22 +359,30 @@ d3.csv('/activities.csv', function(activities) {
       
       var lengthKeys = d3.keys(a.Length);
       
-      var totalTime = 0;
+      var elapsedTime = 0;
+      var movingTime = 0;
       data.forEach(function(d,i) {
         d.Activity = a.Name;
         d.ActivityLength = a.Length;
         d.DistancePoint = i == 0 ? d.Distance : d.Distance - data[i-1].Distance;
         d.TimePoint = i == 0 ? 1000 : d.Time - data[i-1].Time;
         
-        totalTime += d.TimePoint;
-        d.TimeAccumulative = totalTime;
+        elapsedTime += d.TimePoint;
+        d.TimeElapsed = elapsedTime;
         
+        if (d.DistancePoint < 0.37) {
+          d.LapType = "Stationary";
+          d.TimeMoving = movingTime;
+        } else {
+          movingTime += d.TimePoint;
+          d.TimeMoving = movingTime;
+
         if (lengthKeys.length == 1) {
           d.LapType = lengthKeys[0];
         } else if (lengthKeys.length == 3) {
           lengthKeys.forEach(function(k) {
-            if (d.TimeAccumulative >= a.Length[k][0] &&
-                d.TimeAccumulative <= a.Length[k][1]) {
+            if (d.TimeMoving >= a.Length[k][0] &&
+                d.TimeMoving <= a.Length[k][1]) {
               d.LapType = k;
             }
           });
@@ -372,10 +392,7 @@ d3.csv('/activities.csv', function(activities) {
         } else {
           d.LapType = "Unknown";
         }
-        
-        if (d.DistancePoint < 0.37) {
-          d.LapType = "Stationary";
-        }
+}
       });
       
       facts.add(data);
