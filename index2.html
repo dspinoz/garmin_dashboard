@@ -349,6 +349,8 @@ d3.csv('/activities.csv', function(activities) {
       
       var totalTime = 0;
       data.forEach(function(d,i) {
+        d.Activity = a.Name;
+        d.ActivityLength = a.Length;
         d.DistancePoint = i == 0 ? d.Distance : d.Distance - data[i-1].Distance;
         d.TimePoint = i == 0 ? 1000 : d.Time - data[i-1].Time;
         
@@ -370,12 +372,10 @@ d3.csv('/activities.csv', function(activities) {
         } else {
           d.LapType = "Unknown";
         }
-      });
-      
-      data.map(function(d) {
-        d.Activity = a.Name;
-        d.ActivityLength = a.Length;
-        return d;
+        
+        if (d.DistancePoint < 0.37) {
+          d.LapType = "Stationary";
+        }
       });
       
       facts.add(data);
