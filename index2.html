@@ -61,7 +61,12 @@
           <a class="navbar-brand" href="#">Garmin Dashboard</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
-        </div><!--/.nav-collapse -->
+          <div class="progress" style="margin-top:15px;">
+            <div class="progress-bar progress-bar-success" style="width: 0%">
+              <span class="sr-only">Complete</span>
+            </div>
+          </div>
+        </div>
       </div>
     </nav>
 
@@ -324,6 +329,9 @@ d3.csv('/activities.csv', function(activities) {
   dc.redrawAll();
   refreshDataTable();
   
+  var total = activities.length;
+  var complete = 0;
+  
   activities.forEach(function(a,i) {
     
     // length represents the type of workout, in minutes
@@ -361,6 +369,8 @@ d3.csv('/activities.csv', function(activities) {
       return d;
     }, function(data) {
       console.log('activity',a,data);
+      
+      d3.select('.progress-bar').classed('progress-bar-success', true).style('width', ((++complete/total)*100)+'%');
       
       var lengthKeys = d3.keys(a.Length);
       
@@ -407,10 +417,14 @@ d3.csv('/activities.csv', function(activities) {
       facts.add(data);
       dc.redrawAll();
       refreshDataTable();
+
+      if ((complete/total) == 1) {
+        d3.select('.progress').style('display', 'none');
+      }
+
     });
+    
   });
-  
-  
 });
 
   
