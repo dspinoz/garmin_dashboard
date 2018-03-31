@@ -213,7 +213,7 @@ var dataTable = $("#data-table").dataTable({
     },
     {
       targets: 4,
-      data: function(d) { return d3.round((d.DistancePoint/(d.TimePoint/1000))*3.6,3); }
+      data: function(d) { return d3.round(d.SpeedKH,3) + "km/h " + formatSeconds(d.PaceSK); }
     },
     {
       targets: 5,
@@ -371,11 +371,15 @@ d3.csv('/activities.csv', function(activities) {
         d.ActivityLength = a.Length;
         d.DistancePoint = i == 0 ? d.Distance : d.Distance - data[i-1].Distance;
         d.TimePoint = i == 0 ? 1000 : d.Time - data[i-1].Time;
+        d.SpeedMS = (d.DistancePoint/(d.TimePoint/1000));
+        d.SpeedKH = d.SpeedMS * 3.6;
+        d.PaceSK = 1000 / d.SpeedMS;
+        d.PaceSM = 1609.344 / d.SpeedMS;
         
         elapsedTime += d.TimePoint;
         d.TimeElapsed = elapsedTime;
         
-        if (d.DistancePoint < 0.37) {
+        if (d.DistancePoint <0.1 || d.SpeedKH < 3.5) {
           d.LapType = "Stationary";
           d.TimeMoving = movingTime;
         } else {
