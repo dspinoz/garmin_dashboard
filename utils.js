@@ -38,3 +38,50 @@ function dateToInterval(d,attr,scale,interval) {
     return scale.range(subHalf, addHalf, interval)[0];
 };
 
+function remove_empty_bins(chart, group) {
+  return {
+    all:function () {
+      return group.all().filter(function(d) {
+        return chart.valueAccessor()(d) != 0;
+      });
+    }
+  };
+}
+
+
+//https://github.com/dc-js/dc.js/issues/667
+function nonzero_min(chart) {
+  dc.override(chart, 'yAxisMin', function () {
+    var min = d3.min(chart.data(), function (layer) {
+      return d3.min(
+        layer.values.filter(function(p) { return p.y != 0; }), 
+        function (p) {
+          return p.y + p.y0;
+        });
+    });
+    return dc.utils.subtract(min, chart.yAxisPadding());
+  });
+  
+  return chart;
+}    
+
+
+function reduceAddAvg(attr) {
+  return function(p,v) {
+    ++p.count
+    p.sum += v[attr];
+    p.avg = p.sum/p.count;
+    return p;
+  };
+}
+function reduceRemoveAvg(attr) {
+  return function(p,v) {
+    --p.count
+    p.sum -= v[attr];
+    p.avg = p.count ? p.sum/p.count : 0;
+    return p;
+  };
+}
+function reduceInitAvg() {
+  return {count:0, sum:0, avg:0};
+}
