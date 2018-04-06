@@ -220,7 +220,7 @@ var dataTable = $("#data-table").dataTable({
     },
     {
       targets: 4,
-      data: function(d) { return d3.round(d.SpeedKH,3) + "km/h " + formatSeconds(d.PaceSK); }
+      data: function(d) { return d3.round(d.SpeedKH,3) + "km/h " + formatSeconds(d.PaceSK,false) + "m/km"; }
     },
     {
       targets: 5,
