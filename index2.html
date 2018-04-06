@@ -139,7 +139,7 @@
               <h3 class="panel-title">Speed <small>Distance / Time</small></h3>
             </div>
             <div class="panel-body">
-              <div id="chart-distance-time"></div>
+              <div id="chart-speed-time"></div>
             </div>
           </div>
         </div>
@@ -178,6 +178,7 @@ var activityDim = facts.dimension(function(d) { return d.Activity; });
 var lapDim = facts.dimension(function(d) { return d.Lap; });
 var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
 var hrTimeDim = facts.dimension(function(d) { return [d.File, d.TimeMoving]; });
+var speedTimeDim = facts.dimension(function(d) { return [d.File, d.TimeMoving]; });
   
 var chartActivity = dc.pieChart("#chart-activity");
 var chartFilename = dc.pieChart("#chart-filename");
@@ -189,6 +190,7 @@ var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
 var chartTotalTime = dc.numberDisplay("#chart-stats-time");
 var chartMovingTime = dc.numberDisplay("#chart-stats-mtime");
 var chartHRTime = dc.seriesChart("#chart-hr-time");
+var chartSpeedTime = dc.seriesChart("#chart-speed-time");
 
 
 var dataTable = $("#data-table").dataTable({
@@ -253,6 +255,14 @@ function refreshDataTable() {
     chartHRTimeYScale.domain(
       d3.extent(chartHRTimeGroup.all(), 
         function(d) { return chartHRTime.valueAccessor()(d); }));
+        
+    chartSpeedTimeXScale.domain(
+      d3.extent(chartSpeedTimeGroup.all(), 
+        function(d) { return chartSpeedTime.keyAccessor()(d); }));
+    
+    chartSpeedTimeYScale.domain(
+      d3.extent(chartSpeedTimeGroup.all(), 
+        function(d) { return chartSpeedTime.valueAccessor()(d); }));
   });
 }
 
@@ -369,6 +379,48 @@ chartHRTime.xAxis()
       return formatSeconds(d/1000 - chartHRTimeXScale.domain()[0]/1000,false);
     })
     ;//.ticks(7);
+
+
+
+
+var chartSpeedTimeGroup = remove_empty_bins(chartSpeedTime, speedTimeDim.group()
+  .reduce(reduceAddAvg('SpeedMS'), reduceRemoveAvg('SpeedMS'), reduceInitAvg));
+  
+var chartSpeedTimeXScale = d3.scale.linear()
+    .domain(
+      d3.extent(chartSpeedTimeGroup.all(), 
+        function(d) { return chartSpeedTime.keyAccessor()(d); }));
+    
+var chartSpeedTimeYScale = d3.scale.linear()
+  .domain(
+    d3.extent(chartSpeedTimeGroup.all(), 
+      function(d) { return chartSpeedTime.valueAccessor()(d); })); 
+    
+nonzero_min(chartSpeedTime)
+  .width(500)
+  .chart(dc.lineChart)
+  .keyAccessor(function(d,i) { return d.key[1]; })
+  .valueAccessor(function(d) { return d.value.avg; })
+  .x(chartSpeedTimeXScale)
+  .elasticX(true)
+  .y(chartSpeedTimeYScale)
+  .elasticY(true)
+  .dimension(speedTimeDim)
+  .group(chartSpeedTimeGroup)
+  .seriesAccessor(function(d) { return d.key[0]; });
+  
+chartSpeedTime.xAxis()
+    .tickFormat(function(d) {
+      return formatSeconds(d/1000 - chartSpeedTimeXScale.domain()[0]/1000,false);
+    });
+
+chartSpeedTime.margins().left = 40;
+chartSpeedTime.yAxis()
+    .tickFormat(function(d) {
+      var kmh = d * 3.6;
+      var paceK = 1000 / d;
+      return formatSeconds(paceK,false);
+    });
 
 
 dc.renderAll();
