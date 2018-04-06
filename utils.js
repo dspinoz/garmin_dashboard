@@ -30,3 +30,11 @@ function formatSeconds(seconds,human = true) {
   
   return str;
 }
+
+function dateToInterval(d,attr,scale,interval) {
+    var date = d[attr];
+    var subHalf = scale.offset(date, -1 * interval / 2);
+    var addHalf = scale.offset(date, interval / 2);
+    return scale.range(subHalf, addHalf, interval)[0];
+};
+
