@@ -1,5 +1,9 @@
 
 function formatSeconds(seconds,human = true) {
+  if (seconds == 0 || seconds == Infinity) {
+    return human ? "0s" : "00:00";
+
+  }
   var sec = 1;
   var sec_min = sec * 60;
   var sec_hour = sec_min * 60;
