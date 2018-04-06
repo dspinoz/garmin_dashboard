@@ -177,7 +177,7 @@ var filenameDim = facts.dimension(function(d) { return d.File; });
 var activityDim = facts.dimension(function(d) { return d.Activity; });
 var lapDim = facts.dimension(function(d) { return d.Lap; });
 var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
-var hrTimeDim = facts.dimension(function(d) { return dateToInterval(d, 'Time', timeScale,1); });
+var hrTimeDim = facts.dimension(function(d) { return [d.File, d.TimeLocal]; });
   
 var chartActivity = dc.pieChart("#chart-activity");
 var chartFilename = dc.pieChart("#chart-filename");
@@ -188,7 +188,7 @@ var chartPointsCount = dc.numberDisplay("#chart-stats-points");
 var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
 var chartTotalTime = dc.numberDisplay("#chart-stats-time");
 var chartMovingTime = dc.numberDisplay("#chart-stats-mtime");
-var chartHRTime = dc.lineChart("#chart-hr-time");
+var chartHRTime = dc.seriesChart("#chart-hr-time");
 
 
 var dataTable = $("#data-table").dataTable({
@@ -349,9 +349,11 @@ var chartHRTimeYScale = d3.scale.linear()
       function(d) { return chartHRTime.valueAccessor()(d); })); 
     
 
-nonzero_min(chartHRTime)
+//TODO nonzero_min
+chartHRTime
   .width(500)
-  .keyAccessor(function(d) { return d.key; })
+  .chart(dc.lineChart)
+  .keyAccessor(function(d,i) { return d.key[1]; })
   .valueAccessor(function(d) { return d.value.avg; })
   .x(chartHRTimeXScale)
   .elasticX(true)
@@ -359,7 +361,9 @@ nonzero_min(chartHRTime)
   .elasticY(true)
   .dimension(hrTimeDim)
   .group(chartHRTimeGroup)
-  .xAxis()
+  .seriesAccessor(function(d) { return d.key[0]; });
+  
+chartHRTime.xAxis()
     .tickFormat(function(d) {
       // format based on the first time value
       return formatSeconds(d/1000 - chartHRTimeXScale.domain()[0]/1000,false);
@@ -408,6 +412,7 @@ d3.csv('/activities.csv', function(activities) {
       d.Lap = +d.Lap;
       d.Distance = +d.Distance;
       d.Time = timeParser.parse(d.Time);
+      d.TimeInterval = dateToInterval(d, 'Time', timeScale, 1);
       d.HeartRate = +d['Heart Rate'];
       delete d['Heart Rate'];
       
@@ -426,6 +431,11 @@ d3.csv('/activities.csv', function(activities) {
         d.ActivityLength = a.Length;
         d.DistancePoint = i == 0 ? d.Distance : d.Distance - data[i-1].Distance;
         d.TimePoint = i == 0 ? 1000 : d.Time - data[i-1].Time;
+        if (i == 0) {
+          d.TimeLocal = 0;
+        } else {
+          d.TimeLocal = d.Time - arr[0].Time;
+        }
 
         elapsedTime += d.TimePoint;
         d.TimeElapsed = elapsedTime;
