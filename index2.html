@@ -203,7 +203,7 @@ var dataTable = $("#data-table").dataTable({
   columnDefs: [
     {
       targets: 0,
-      data: function(d) { return d.File + " " + timeFormat(d.Time); }
+      data: function(d) { return d.File + " " + timeFormat(d.Time) + " "+ formatSeconds(d.TimeMoving/1000) +" ("+formatSeconds(d.TimeElapsed/1000)+") "; }
 //return JSON.stringify(d); }
     },
     {
