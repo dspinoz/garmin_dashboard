@@ -407,7 +407,72 @@ nonzero_min(chartSpeedTime)
   .elasticY(true)
   .dimension(speedTimeDim)
   .group(chartSpeedTimeGroup)
-  .seriesAccessor(function(d) { return d.key[0]; });
+  .seriesAccessor(function(d) { return d.key[0]; })
+  .on('renderlet', function(chart) {
+        // calculate the average value for each series
+        // converts the data like the internals to series chart
+        var nester = d3.nest().key(chart.seriesAccessor());
+        if (chart.seriesSort()) {
+            nester.sortKeys(chart.seriesSort());
+        }
+        if (chart.valueSort()) {
+            nester.sortValues(chart.valueSort());
+        }
+        var nesting = nester.entries(chart.data());
+    
+        var averages = nesting.map(function(series) {
+          var count = 0;
+          var total = 0;
+          
+          series.values.forEach(function(d) {
+            total += chart.valueAccessor()(d);
+            count++;
+          });
+          
+          return {key: series.key, value: total/count};
+        });
+    
+    
+        console.log('speed data',chart.data(),averages);
+        
+        var line = d3.svg.line()
+            .x(function(d) { return d.x; })
+            .y(function(d) { return d.y; })
+            .interpolate('linear');
+        
+        var chartBody = chart.select('g.chart-body');
+        var path = chartBody.selectAll('path.extra').data(averages);
+        
+        path.exit().remove();
+        
+        path.enter().append('path').attr({
+            class: 'extra',
+            id: 'extra-line'
+        }).attr('stroke', chart.getColor);
+        
+        path.attr('d', function(d) {
+          var p1 = [chart.x().range()[0], chart.y()(d.value)];
+          var p2 = [chart.x().range()[1], chart.y()(d.value)];
+        
+          return 'M' + p1[0] + ',' + p1[1] + 'L' + p2[0] + ','+p2[1]; 
+        });
+        
+        
+    
+    
+        /*
+        // and perhaps you'd like to label it?
+        var text = chartBody.selectAll('text.extra-label').data([0]);
+        text.enter().append('text')
+                .attr('text-anchor', 'middle')
+            .append('textPath').attr({
+                class: 'extra-label',
+                'xlink:href': '#extra-line',
+                startOffset: '50%'
+            })
+            .text('this is a label for the line');
+            */
+    });
   
 chartSpeedTime.xAxis()
     .tickFormat(function(d) {
