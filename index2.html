@@ -431,9 +431,14 @@ nonzero_min(chartSpeedTime)
           
           return {key: series.key, value: total/count};
         });
+        
+        var average = {key: 'all', count: 0, total: 0, value: 0};
+        chart.data().forEach(function(d) {
+          average.total += chart.valueAccessor()(d);
+          average.count++;
+          average.value = average.total / average.count;
+        });
     
-    
-        console.log('speed data',chart.data(),averages);
         
         var line = d3.svg.line()
             .x(function(d) { return d.x; })
@@ -441,11 +446,11 @@ nonzero_min(chartSpeedTime)
             .interpolate('linear');
         
         var chartBody = chart.select('g.chart-body');
-        var path = chartBody.selectAll('path.extra').data(averages);
+        var path = chartBody.selectAll('path.extra').data([average]);
         
         path.exit().remove();
         
-        path.enter().append('path').attr({
+        path.enter().insert('path', ':first-child').attr({
             class: 'extra',
             id: 'extra-line'
         }).attr('stroke', chart.getColor);
@@ -457,21 +462,23 @@ nonzero_min(chartSpeedTime)
           return 'M' + p1[0] + ',' + p1[1] + 'L' + p2[0] + ','+p2[1]; 
         });
         
-        
-    
-    
-        /*
         // and perhaps you'd like to label it?
-        var text = chartBody.selectAll('text.extra-label').data([0]);
-        text.enter().append('text')
-                .attr('text-anchor', 'middle')
-            .append('textPath').attr({
-                class: 'extra-label',
-                'xlink:href': '#extra-line',
-                startOffset: '50%'
-            })
-            .text('this is a label for the line');
-            */
+        var text = chartBody.selectAll('text.extra-label').data([average]);
+        text.exit().remove();
+        text.enter()
+        .insert('text',':last-child')
+        .attr('class', 'extra-label')
+        .attr('text-anchor', 'middle')
+        .insert('textPath',':first-child')
+        .attr({
+          class: 'extra-label',
+          'xlink:href': '#extra-line',
+          startOffset: '50%'
+        });
+          
+        text.select('textPath.extra-label').text(function(d) {
+          return formatSeconds(1000 / d.value,false);
+        });
     });
   
 chartSpeedTime.xAxis()
