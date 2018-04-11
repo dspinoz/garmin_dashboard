@@ -140,6 +140,7 @@
             </div>
             <div class="panel-body">
               <div id="chart-speed-time"></div>
+              <table class="table table-condensed" id="chart-stats-speed"></table>
             </div>
           </div>
         </div>
@@ -432,13 +433,29 @@ nonzero_min(chartSpeedTime)
           return {key: series.key, value: total/count};
         });
         
-        var average = {key: 'all', count: 0, total: 0, value: 0};
+        var average = {key: 'Global', count: 0, total: 0, value: 0};
         chart.data().forEach(function(d) {
           average.total += chart.valueAccessor()(d);
           average.count++;
           average.value = average.total / average.count;
         });
     
+        d3.select('#chart-stats-speed-avg').text(formatSeconds(1000 / average.value,false));
+        
+        {
+          var rows = [average];
+          averages.forEach(function(a) {
+            rows.push(a);
+          });
+          
+          var tr = d3.select('#chart-stats-speed').selectAll('tr.avg').data(rows);
+          tr.exit().remove();
+          tr.enter().append('tr').attr('class', 'avg');
+          tr.html(function(d) {
+            return '<tr><th>'+d.key+'</th><td>'+formatSeconds(1000 / d.value,false)+'</td></tr>';
+          });
+        }
+        
         
         var line = d3.svg.line()
             .x(function(d) { return d.x; })
