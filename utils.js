@@ -1,3 +1,6 @@
+function format_hr(d) {
+  return d.toFixed(0);
+}
 
 function formatSeconds(seconds,human = true) {
   if (seconds == 0 || seconds == Infinity) {

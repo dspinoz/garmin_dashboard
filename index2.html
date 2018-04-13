@@ -130,6 +130,7 @@
             </div>
             <div class="panel-body">
               <div id="chart-hr-time"></div>
+              <table class="table table-condensed" id="chart-stats-hr"></table>
             </div>
           </div>
         </div>
@@ -372,7 +373,93 @@ chartHRTime
   .elasticY(true)
   .dimension(hrTimeDim)
   .group(chartHRTimeGroup)
-  .seriesAccessor(function(d) { return d.key[0]; });
+  .seriesAccessor(function(d) { return d.key[0]; })
+  .on('renderlet', function(chart) {
+        // calculate the average value for each series
+        // converts the data like the internals to series chart
+        var nester = d3.nest().key(chart.seriesAccessor());
+        if (chart.seriesSort()) {
+            nester.sortKeys(chart.seriesSort());
+        }
+        if (chart.valueSort()) {
+            nester.sortValues(chart.valueSort());
+        }
+        var nesting = nester.entries(chart.data());
+    
+        var averages = nesting.map(function(series) {
+          var count = 0;
+          var total = 0;
+          
+          series.values.forEach(function(d) {
+            total += chart.valueAccessor()(d);
+            count++;
+          });
+          
+          return {key: series.key, value: total/count};
+        });
+        
+        var average = {key: 'Global', count: 0, total: 0, value: 0};
+        chart.data().forEach(function(d) {
+          average.total += chart.valueAccessor()(d);
+          average.count++;
+          average.value = average.total / average.count;
+        });
+        
+        {
+          var rows = [average];
+          averages.forEach(function(a) {
+            rows.push(a);
+          });
+          
+          var tr = d3.select('#chart-stats-hr').selectAll('tr.avg').data(rows);
+          tr.exit().remove();
+          tr.enter().append('tr').attr('class', 'avg');
+          tr.html(function(d) {
+            return '<tr><th>'+d.key+'</th><td>'+format_hr(d.value)+'</td></tr>';
+          });
+        }
+        
+        //TODO line not rendering on correct position of y axis
+        var line = d3.svg.line()
+            .x(function(d) { return d.x; })
+            .y(function(d) { return d.y; })
+            .interpolate('linear');
+        
+        var chartBody = chart.select('g.chart-body');
+        var path = chartBody.selectAll('path.extra').data([average]);
+        
+        path.exit().remove();
+        
+        path.enter().insert('path', ':first-child').attr({
+            class: 'extra',
+            id: 'extra-line'
+        }).attr('stroke', chart.getColor);
+        
+        path.attr('d', function(d) {
+          var p1 = [chart.x().range()[0], chart.y()(d.value)];
+          var p2 = [chart.x().range()[1], chart.y()(d.value)];
+        
+          return 'M' + p1[0] + ',' + p1[1] + 'L' + p2[0] + ','+p2[1]; 
+        });
+        
+        // and perhaps you'd like to label it?
+        var text = chartBody.selectAll('text.extra-label').data([average]);
+        text.exit().remove();
+        text.enter()
+        .insert('text',':last-child')
+        .attr('class', 'extra-label')
+        .attr('text-anchor', 'middle')
+        .insert('textPath',':first-child')
+        .attr({
+          class: 'extra-label',
+          'xlink:href': '#extra-line',
+          startOffset: '50%'
+        });
+          
+        text.select('textPath.extra-label').text(function(d) {
+          return format_hr(d.value);
+        });
+    });
   
 chartHRTime.xAxis()
     .tickFormat(function(d) {
