@@ -426,16 +426,25 @@ chartHRTime
             .interpolate('linear');
         
         var chartBody = chart.select('g.chart-body');
-        var path = chartBody.selectAll('path.extra').data([average]);
+        
+        
+        var extras = d3.range(chart.y().range()[1], chart.y().range()[0], 10).map(function(d,i) {
+          return {key: i, value: d};
+        });
+        
+        extras.push(average);
+        
+        var path = chartBody.selectAll('path.extra').data(extras);
         
         path.exit().remove();
         
-        path.enter().insert('path', ':first-child').attr({
-            class: 'extra',
-            id: 'extra-line'
-        }).attr('stroke', chart.getColor);
+        path.enter().append('path')
+        .attr('class', 'extra')
+        .attr('stroke', chart.getColor);
         
-        path.attr('d', function(d) {
+        path
+        .attr('id', function(d,i) { return 'extra-line-'+i; })
+        .attr('d', function(d) {
           var p1 = [chart.x().range()[0], chart.y()(d.value)];
           var p2 = [chart.x().range()[1], chart.y()(d.value)];
         
@@ -443,24 +452,24 @@ chartHRTime
         });
         
         // and perhaps you'd like to label it?
-        var text = chartBody.selectAll('text.extra-label').data([average]);
+        var text = chartBody.selectAll('text.extra-label').data(extras);
         text.exit().remove();
         text.enter()
-        .insert('text',':last-child')
+        .append('text')
         .attr('class', 'extra-label')
         .attr('text-anchor', 'middle')
-        .insert('textPath',':first-child')
+        .append('textPath')
         .attr({
           class: 'extra-label',
-          'xlink:href': '#extra-line',
           startOffset: '50%'
         });
           
-        text.select('textPath.extra-label').text(function(d) {
+        text.select('textPath.extra-label')
+        .attr('xlink:href', function(d,i) { return '#extra-line-'+i; })
+        .text(function(d) {
           return format_hr(d.value);
         });
     });
-  
 chartHRTime.xAxis()
     .tickFormat(function(d) {
       // format based on the first time value
