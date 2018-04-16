@@ -258,6 +258,8 @@ function refreshDataTable() {
       d3.extent(chartHRTimeGroup.all(), 
         function(d) { return chartHRTime.valueAccessor()(d); }));
         
+    chartHRTime.redraw();
+        
     chartSpeedTimeXScale.domain(
       d3.extent(chartSpeedTimeGroup.all(), 
         function(d) { return chartSpeedTime.keyAccessor()(d); }));
