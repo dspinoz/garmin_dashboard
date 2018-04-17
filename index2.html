@@ -259,6 +259,11 @@ function refreshDataTable() {
       .rows.add(facts.allFiltered())
       .draw();
       
+    if (d3.extent(chartHRTimeGroup.all(), 
+        function(d) { return chartHRTime.keyAccessor()(d); }).filter(function(d) { return d == undefined; }).length == 0 &&
+        d3.extent(chartHRTimeGroup.all(), 
+        function(d) { return chartHRTime.valueAccessor()(d); }).filter(function(d) { return d == undefined; }).length == 0) {
+      
     chartHRTimeXScale.domain(
       d3.extent(chartHRTimeGroup.all(), 
         function(d) { return chartHRTime.keyAccessor()(d); }));
@@ -268,6 +273,7 @@ function refreshDataTable() {
         function(d) { return chartHRTime.valueAccessor()(d); }));
         
     chartHRTime.redraw();
+    }
         
     chartSpeedTimeXScale.domain(
       d3.extent(chartSpeedTimeGroup.all(), 
@@ -617,13 +623,23 @@ chartSpeedTime.yAxis()
       return formatSeconds(paceK,false);
     });
 
+var redraw_count = 0;
+function redraw() {
+  if (facts.size() > 0) {
+    if (redraw_count == 0) {
+      dc.renderAll();
+    } else {
+      dc.redrawAll();
+    }
+    refreshDataTable();
+    redraw_count++;
+  }
+}
 
-dc.renderAll();
-refreshDataTable();
+redraw();
 
 d3.csv('/activities.csv', function(activities) {
-  dc.redrawAll();
-  refreshDataTable();
+  redraw();
   
   var total = activities.length;
   var complete = 0;
@@ -722,8 +738,8 @@ d3.csv('/activities.csv', function(activities) {
       });
       
       facts.add(data);
-      dc.redrawAll();
-      refreshDataTable();
+      
+      redraw();
 
       if ((complete/total) == 1) {
         d3.select('.progress').style('display', 'none');
