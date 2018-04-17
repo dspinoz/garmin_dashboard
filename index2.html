@@ -200,7 +200,7 @@ var chartPointsCount = dc.numberDisplay("#chart-stats-points");
 var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
 var chartTotalTime = dc.numberDisplay("#chart-stats-time");
 var chartMovingTime = dc.numberDisplay("#chart-stats-mtime");
-var chartHRTime = dc.seriesChart("#chart-hr-time");
+var chartHRTime = dc.lineChart("#chart-hr-time");
 var chartSpeedTime = dc.seriesChart("#chart-speed-time");
 
 
@@ -379,9 +379,8 @@ var chartHRTimeYScale = d3.scale.linear()
     
 
 //TODO nonzero_min
-chartHRTime
+nonzero_min(chartHRTime)
   .width(500)
-  .chart(dc.lineChart)
   .keyAccessor(function(d,i) {  return d.key.m; })
   .valueAccessor(function(d) { return d.value.avg; })
   .x(chartHRTimeXScale)
@@ -390,51 +389,13 @@ chartHRTime
   .elasticY(true)
   .dimension(hrTimeDim)
   .group(chartHRTimeGroup)
-  .seriesAccessor(function(d) { return d.key.f; })
+    .renderDataPoints(true)
+    .renderArea(true)
+    .brushOn(false)
+    .stack(chartHRTimeGroup, function(d) {  return d.key.f; })
   .on('renderlet', function(chart) {
-        // calculate the average value for each series
-        // converts the data like the internals to series chart
-        var nester = d3.nest().key(chart.seriesAccessor());
-        if (chart.seriesSort()) {
-            nester.sortKeys(chart.seriesSort());
-        }
-        if (chart.valueSort()) {
-            nester.sortValues(chart.valueSort());
-        }
-        var nesting = nester.entries(chart.data());
-    
-        var averages = nesting.map(function(series) {
-          var count = 0;
-          var total = 0;
-          
-          series.values.forEach(function(d) {
-            total += chart.valueAccessor()(d);
-            count++;
-          });
-          
-          return {key: series.key, value: total/count};
-        });
-        
-        var average = {key: 'Global', count: 0, total: 0, value: 0};
-        chart.data().forEach(function(d) {
-          average.total += chart.valueAccessor()(d);
-          average.count++;
-          average.value = average.total / average.count;
-        });
-        
-        {
-          var rows = [average];
-          averages.forEach(function(a) {
-            rows.push(a);
-          });
-          
-          var tr = d3.select('#chart-stats-hr').selectAll('tr.avg').data(rows);
-          tr.exit().remove();
-          tr.enter().append('tr').attr('class', 'avg');
-          tr.html(function(d) {
-            return '<tr><th>'+d.key+'</th><td>'+format_hr(d.value)+'</td></tr>';
-          });
-        }
+      //console.log('CHART HR', 'y domain', chart.y().domain(), chartHRTime.y().domain());
+
         
         //TODO line not rendering on correct position of y axis
         var line = d3.svg.line()
@@ -449,7 +410,7 @@ chartHRTime
           return {key: i, value: d};
         });
         
-        extras.push(average);
+        //extras.push(average);
         
         var path = chartBody.selectAll('path.extra').data(extras);
         
