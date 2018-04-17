@@ -175,11 +175,20 @@ var timeFormat = d3.time.format('%c');
 var timeScale = d3.time.second;
 var facts = crossfilter();
 
+function FileMovingTimeDate(d) {
+  this.f = d.File;
+  this.m = d.TimeMoving;
+  this.t = d.Time;
+}
+FileMovingTimeDate.prototype.valueOf = function() {
+  return this.m;
+};
+
 var filenameDim = facts.dimension(function(d) { return d.File; });
 var activityDim = facts.dimension(function(d) { return d.Activity; });
 var lapDim = facts.dimension(function(d) { return d.Lap; });
 var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
-var hrTimeDim = facts.dimension(function(d) { return [d.File, d.TimeMoving]; });
+var hrTimeDim = facts.dimension(function(d) { return new FileMovingTimeDate(d); });
 var speedTimeDim = facts.dimension(function(d) { return [d.File, d.TimeMoving]; });
   
 var chartActivity = dc.pieChart("#chart-activity");
@@ -367,7 +376,7 @@ var chartHRTimeYScale = d3.scale.linear()
 chartHRTime
   .width(500)
   .chart(dc.lineChart)
-  .keyAccessor(function(d,i) { return d.key[1]; })
+  .keyAccessor(function(d,i) {  return d.key.m; })
   .valueAccessor(function(d) { return d.value.avg; })
   .x(chartHRTimeXScale)
   .elasticX(true)
@@ -375,7 +384,7 @@ chartHRTime
   .elasticY(true)
   .dimension(hrTimeDim)
   .group(chartHRTimeGroup)
-  .seriesAccessor(function(d) { return d.key[0]; })
+  .seriesAccessor(function(d) { return d.key.f; })
   .on('renderlet', function(chart) {
         // calculate the average value for each series
         // converts the data like the internals to series chart
