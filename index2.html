@@ -92,6 +92,7 @@
             <div class="panel-body">
               <div id="chart-lap-distance"></div>
               <div id="chart-lap-time"></div>
+              <table class="table table-condensed" id="chart-stats-lap"></table>
             </div>
           </div>
         </div>
@@ -190,6 +191,7 @@ var lapDim = facts.dimension(function(d) { return d.Lap; });
 var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
 var hrTimeDim = facts.dimension(function(d) { return new FileMovingTimeDate(d); });
 var speedTimeDim = facts.dimension(function(d) { return [d.File, d.TimeMoving]; });
+var movingTimeDim = facts.dimension(function(d) { return d.TimeMoving; });
   
 var chartActivity = dc.pieChart("#chart-activity");
 var chartFilename = dc.pieChart("#chart-filename");
@@ -216,7 +218,7 @@ var dataTable = $("#data-table").dataTable({
   columnDefs: [
     {
       targets: 0,
-      data: function(d) { return d.File + " " + timeFormat(d.Time) + " "+ formatSeconds(d.TimeMoving/1000) +" ("+formatSeconds(d.TimeElapsed/1000)+") "; }
+      data: function(d) { return d.File + " " + timeFormat(d.Time) + " ["+ formatSeconds(d.TimeMoving/1000) +"] ("+formatSeconds(d.TimeElapsed/1000)+") "; }
 //return JSON.stringify(d); }
     },
     {
@@ -259,21 +261,79 @@ function refreshDataTable() {
       .rows.add(facts.allFiltered())
       .draw();
       
+      /*
     if (d3.extent(chartHRTimeGroup.all(), 
         function(d) { return chartHRTime.keyAccessor()(d); }).filter(function(d) { return d == undefined; }).length == 0 &&
         d3.extent(chartHRTimeGroup.all(), 
-        function(d) { return chartHRTime.valueAccessor()(d); }).filter(function(d) { return d == undefined; }).length == 0) {
-      
+        function(d) { return chartHRTime.valueAccessor()(d); }).filter(function(d) { return d == undefined; }).length == 0 &&
+        d3.extent(chartWeeksGroup.all(), function(d) { 
+      return d3.min(d.value.entries(),function(e) { return e.value; }); }).filter(function(d) { return d == undefined; }).length == 0) {
+      */
     chartHRTimeXScale.domain(
       d3.extent(chartHRTimeGroup.all(), 
         function(d) { return chartHRTime.keyAccessor()(d); }));
     
-    chartHRTimeYScale.domain(
+    console.log('chart hr time y', 
+      chartHRTime.yAxisMin(),
+      chartHRTimeGroup.all(), 
       d3.extent(chartHRTimeGroup.all(), 
-        function(d) { return chartHRTime.valueAccessor()(d); }));
+          function(d) { return chartHRTime.valueAccessor()(d); })
+    );
         
+        
+    console.log("HR DATA",chartHRTimeGroup.all(),chartWeeksGroup.all());
+    chartHRTimeGroup.all().forEach(function(d,i) {
+      console.log(i,d,formatSeconds(d.key,false),chartHRTime.valueAccessor()(d));
+    });
+    
+    var bbb = [];
+    chartWeeksGroup.all().forEach(function(d,i) {
+      var a = [];
+      d.value.entries().map(function(d) { return d.value; }).forEach(function(d) {
+        d.forEach(function(d) {
+          a.push(d);
+        });
+      });
+      
+      bbb.push(chartHRTime.valueAccessor()(a.reduce(function(t,d) {
+          t.value.count++;
+          t.value.total += d;
+          t.value.avg = t.value.total/t.value.count;
+          return t;
+        }, {value: {count:0, total:0, avg:0}})));
+      
+      
+      
+      
+    });
+        
+        
+    var a = d3.extent(chartHRTimeGroup.all(), 
+        function(d) { return chartHRTime.valueAccessor()(d); });
+    var b = d3.extent(bbb);
+        
+        
+    
+    
+      
+        
+    console.log('HR TIME',a,'HR WEEKS',b,d3.extent([a[0],a[1],b[0],b[1]]));
+    chartHRTimeYScale.domain(d3.extent([a[0],a[1],b[0],b[1]]));
+    //chartHRTime.y().domain([Math.min(a[0],b[0]), Math.max(a[1],b[1])]);
+    //chartHRTime.y().domain(b);
+        
+        
+        // calculate the average value for each series
+        // converts the data like the internals to series chart
+        //var nester = d3.nest().key(function(d,i) { if (i==0) console.log('nest data',d); return d.key.f; });
+
+        //var nesting = nester.entries(chart.data());
+        
+        console.log('CHART HR', 'nest', chartHRTime.data());
+    
+
+  //}      
     chartHRTime.redraw();
-    }
         
     chartSpeedTimeXScale.domain(
       d3.extent(chartSpeedTimeGroup.all(), 
@@ -282,6 +342,7 @@ function refreshDataTable() {
     chartSpeedTimeYScale.domain(
       d3.extent(chartSpeedTimeGroup.all(), 
         function(d) { return chartSpeedTime.valueAccessor()(d); }));
+
   });
 }
 
@@ -307,6 +368,9 @@ chartLapDistance
   .valueAccessor(function(d) { return d.value; })
   .title(function(d) {
     return d.key + ": " + d3.round(d.value / 1000) + " km";
+  })
+  .on('renderlet', function(chart) {
+    console.log('lap distance', chart.data(), chart.group().all());
   });
   
 chartLapTime
@@ -362,9 +426,127 @@ return d.LapType == "Stationary" ? 0 : d.TimePoint; }))
   .valueAccessor(function(d) { return d; });
 
 
+//issue with multiple values on same key
+function reduceWorklogOrig(group) {
+  function kfn(d) {
+    return d.File;
+  }
+  
+  function vfn(d) {
+    return d['HeartRate'];
+  }
+  
+  function add(p, v, nf) {
+    if (!p.has(kfn(v))) {
+      p.set(kfn(v), 0);
+    } else {
+      console.log('WEEKS REDUCE EXISTS',kfn(v),v);
+    }
+    
+    p.set(kfn(v), p.get(kfn(v))+vfn(v));
+    return p;
+  }
+  
+  function rem(p, v, nf) {
+    p.set(kfn(v), p.get(kfn(v))-vfn(v));
+    if (p.get(kfn(v)) <= 0) {
+      p.remove(kfn(v));
+    }
+    return p;
+  }
+  
+  function init() {
+    return d3.map()
+  }
+  return group.reduce(add,rem,init);
+}
 
-var chartHRTimeGroup = remove_empty_bins(chartHRTime, hrTimeDim.group()
-  .reduce(reduceAddAvg('HeartRate'), reduceRemoveAvg('HeartRate'), reduceInitAvg));
+function reduceWorklog(group) {
+  function kfn(d) {
+    return d.File;
+  }
+  
+  function vfn(d) {
+    return d['HeartRate'];
+  }
+  
+  function add(p, v, nf) {
+    if (!p.has(kfn(v))) {
+      p.set(kfn(v), []);
+    } else {
+      console.log('WEEKS REDUCE EXISTS',kfn(v),v);
+    }
+    
+    p.get(kfn(v)).push(vfn(v));
+    //p.set(kfn(v), p.get(kfn(v))+vfn(v));
+    return p;
+  }
+  
+  function rem(p, v, nf) {
+    
+    var upd = [];
+    var removed = false;
+    
+    p.get(kfn(v)).forEach(function(d) {
+      if (!removed && d == vfn(v)) {
+        removed = true;
+      } else {
+        upd.push(d);
+      }
+    });
+    
+    p.set(kfn(v), upd);
+    
+    if (upd.length == 0) {
+      p.remove(kfn(v));
+    }
+    
+    return p;
+  }
+  
+  function init() {
+    return d3.map()
+  }
+  return group.reduce(add,rem,init);
+}
+
+function chartWeeksGroupAccessor(index) {
+  return function(d,i) {
+//    if (d.key.getTime() == 0 || d.value.size() == 0) return 0;
+    if (!d.value.has(index)) return undefined;
+    
+    var ret = {count:0, total: 0, avg:0};
+    d.value.get(index).forEach(function(d) {
+      ret.count++;
+      ret.total+=d;
+      ret.avg = ret.total/ret.count;
+    });
+//if (i==0) alert('weekvalueaccessor' + i+'  ' + JSON.stringify(d) + ' ret ' + JSON.stringify(ret) + ' out ' + (ret.avg*0.75));
+    
+    return ret.avg * 0.75;
+  }
+}
+
+var chartWeeksGroup = reduceWorklog(movingTimeDim.group());
+
+/*
+chartHRTime  .stack(chartWeeksGroup, 
+'activity_2562354543.tcx',
+chartWeeksGroupAccessor(
+'activity_2562354543.tcx'));
+*/
+
+/*
+chartHRTime  .stack(chartWeeksGroup, 
+0,
+chartWeeksGroupAccessor(
+0));
+*/
+
+var chartHRTimeGroup = remove_empty_bins(chartHRTime, 
+movingTimeDim.group()
+  .reduce(reduceAddAvg('HeartRate'), reduceRemoveAvg('HeartRate'), reduceInitAvg)
+  );
   
 
 var chartHRTimeXScale = d3.scale.linear()
@@ -379,22 +561,37 @@ var chartHRTimeYScale = d3.scale.linear()
     
 
 //TODO nonzero_min
-nonzero_min(chartHRTime)
+chartHRTime
   .width(500)
-  .keyAccessor(function(d,i) {  return d.key.m; })
-  .valueAccessor(function(d) { return d.value.avg; })
+  //.keyAccessor(function(d,i) {  return d.key.m; })
+  .valueAccessor(function(d,i) { 
+//if (i==0) alert('valueaccessor' + i+'  ' + JSON.stringify(d) + ' out' + d.value.avg);
+
+
+return d.value.avg; })
   .x(chartHRTimeXScale)
   .elasticX(true)
   .y(chartHRTimeYScale)
+  .yAxisLabel("aaa")
+//TODO yaxis not rendered correctly on open
   .elasticY(true)
-  .dimension(hrTimeDim)
-  .group(chartHRTimeGroup)
+  .dimension(movingTimeDim)
+  .group(chartHRTimeGroup, "Average")
+  //.seriesAccessor(function(d) { return d.key.f; })
     .renderDataPoints(true)
     .renderArea(true)
-    .brushOn(false)
-    .stack(chartHRTimeGroup, function(d) {  return d.key.f; })
+    .legend(dc.legend().x(60).y(10).itemHeight(13).gap(5))
+    //.brushOn(false)
+    //.stack(chartHRTimeGroup, function(d) {  return d.key.f; })
+//each stack per file
+/*
+.stack(chartWeeksGroup, 0, chartWeeksGroupAccessor(0))
+.stack(chartWeeksGroup, 1, chartWeeksGroupAccessor(1))
+.stack(chartWeeksGroup, 2, chartWeeksGroupAccessor(2))
+.stack(chartWeeksGroup, 3, chartWeeksGroupAccessor(3))
+*/
   .on('renderlet', function(chart) {
-      //console.log('CHART HR', 'y domain', chart.y().domain(), chartHRTime.y().domain());
+      console.log('CHART HR', 'y domain', chart.y().domain(), chartHRTime.y().domain());
 
         
         //TODO line not rendering on correct position of y axis
@@ -411,6 +608,8 @@ nonzero_min(chartHRTime)
         });
         
         //extras.push(average);
+        
+        //console.log("CHART HR",chart.y().domain()[1], chart.y().domain()[0], extras);
         
         var path = chartBody.selectAll('path.extra').data(extras);
         
@@ -448,6 +647,10 @@ nonzero_min(chartHRTime)
           return format_hr(d.value);
         });
     });
+
+chartHRTime.yAxis()
+  .tickFormat(function(d) { console.log('CHART HR Y TICK', d); return d; });
+
 chartHRTime.xAxis()
     .tickFormat(function(d) {
       // format based on the first time value
@@ -471,7 +674,7 @@ var chartSpeedTimeYScale = d3.scale.linear()
     d3.extent(chartSpeedTimeGroup.all(), 
       function(d) { return chartSpeedTime.valueAccessor()(d); })); 
     
-nonzero_min(chartSpeedTime)
+chartSpeedTime
   .width(500)
   .chart(dc.lineChart)
   .keyAccessor(function(d,i) { return d.key[1]; })
@@ -514,6 +717,7 @@ nonzero_min(chartSpeedTime)
           average.value = average.total / average.count;
         });
     
+        console.log('speed data',chart.data(),average,averages);
         
         {
           var rows = [average];
@@ -630,6 +834,9 @@ d3.csv('/activities.csv', function(activities) {
       console.log("Activity has invalid length " + a.Length,a);
     }
     
+    //dynamic stacks based on activity filename
+    chartHRTime.stack(chartWeeksGroup, a.File, chartWeeksGroupAccessor(a.File))
+    
     d3.csv('/activities/'+a.File, function(d,i) {
       
       d.File = a.File;
@@ -639,6 +846,10 @@ d3.csv('/activities.csv', function(activities) {
       d.TimeInterval = dateToInterval(d, 'Time', timeScale, 1);
       d.HeartRate = +d['Heart Rate'];
       delete d['Heart Rate'];
+      
+      if (d.HeartRate > 200) {
+        console.log('**MAX HR',d.HeartRate,d);
+      }
       
       return d;
     }, function(data) {
