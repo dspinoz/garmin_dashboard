@@ -17,6 +17,7 @@
     "bootstrap": "~3.3.7",
     "datatables": "~1.10.12",
     "cubism": "~1.6.0",
-    "crossfilter2": "~1.4.2"
+    "crossfilter2": "~1.4.2",
+    "d3-queue": "^3.0.7"
   }
 }
