@@ -279,19 +279,20 @@ function refreshDataTable(chart,filter,data) {
       d3.extent(chartHRTimeGroup.all(), 
         function(d) { return chartHRTime.keyAccessor()(d); }));
     
+    /*
     console.log('chart hr time y', 
       chartHRTime.yAxisMin(),
       chartHRTimeGroup.all(), 
       d3.extent(chartHRTimeGroup.all(), 
           function(d) { return chartHRTime.valueAccessor()(d); })
     );
+      */  
         
-        
-    console.log("HR DATA",chartHRTimeGroup.all(),chartWeeksGroup.all());
+    /*console.log("HR DATA",chartHRTimeGroup.all(),chartWeeksGroup.all());
     chartHRTimeGroup.all().forEach(function(d,i) {
       console.log(i,d,formatSeconds(d.key,false),chartHRTime.valueAccessor()(d));
     });
-    
+    */
     var bbb = [];
     chartWeeksGroup.all().forEach(function(d,i) {
       var a = [];
@@ -323,7 +324,7 @@ function refreshDataTable(chart,filter,data) {
     
       
         
-    console.log('HR TIME',a,'HR WEEKS',b,d3.extent([a[0],a[1],b[0],b[1]]));
+    //console.log('HR TIME',a,'HR WEEKS',b,d3.extent([a[0],a[1],b[0],b[1]]));
     chartHRTimeYScale.domain(d3.extent([a[0],a[1],b[0],b[1]]));
     //chartHRTime.y().domain([Math.min(a[0],b[0]), Math.max(a[1],b[1])]);
     //chartHRTime.y().domain(b);
@@ -335,7 +336,7 @@ function refreshDataTable(chart,filter,data) {
 
         //var nesting = nester.entries(chart.data());
         
-        console.log('CHART HR', 'nest', chartHRTime.data());
+        //console.log('CHART HR', 'nest', chartHRTime.data());
     
 
   //}      
@@ -395,7 +396,7 @@ chartLapDistance
     return d.key + ": " + d3.round(d.value / 1000) + " km";
   })
   .on('renderlet', function(chart) {
-    console.log('lap distance', chart.data(), chart.group().all());
+    //console.log('lap distance', chart.data(), chart.group().all());
   });
   
 chartLapTime
@@ -498,9 +499,10 @@ function reduceWorklog(group) {
   function add(p, v, nf) {
     if (!p.has(kfn(v))) {
       p.set(kfn(v), []);
-    } else {
-      console.log('WEEKS REDUCE EXISTS',kfn(v),v);
     }
+    /* else {
+      console.log('WEEKS REDUCE EXISTS',kfn(v),v);
+    }*/
     
     p.get(kfn(v)).push(vfn(v));
     //p.set(kfn(v), p.get(kfn(v))+vfn(v));
@@ -616,7 +618,7 @@ return d.value.avg; })
 .stack(chartWeeksGroup, 3, chartWeeksGroupAccessor(3))
 */
   .on('renderlet', function(chart) {
-      console.log('CHART HR', 'y domain', chart.y().domain(), chartHRTime.y().domain());
+      //console.log('CHART HR', 'y domain', chart.y().domain(), chartHRTime.y().domain());
 
         
         //TODO line not rendering on correct position of y axis
@@ -674,7 +676,10 @@ return d.value.avg; })
     });
 
 chartHRTime.yAxis()
-  .tickFormat(function(d) { console.log('CHART HR Y TICK', d); return d; });
+  .tickFormat(function(d) { 
+    //console.log('CHART HR Y TICK', d);
+    return d; 
+  });
 
 chartHRTime.xAxis()
     .tickFormat(function(d) {
@@ -742,7 +747,7 @@ chartSpeedTime
           average.value = average.total / average.count;
         });
     
-        console.log('speed data',chart.data(),average,averages);
+        //console.log('speed data',chart.data(),average,averages);
         
         {
           var rows = [average];
@@ -830,7 +835,7 @@ function redraw() {
 redraw();
 
 var interval_render_done = true;
-var load_interval = setInterval(load_data, 50);
+var load_interval = setInterval(load_data, 200);
 var load_count = 500;
 var load_complete = false;
 var data_toload = [];
@@ -838,7 +843,7 @@ var data_toload_total = 0;
 var data_toload_complete = 0;
 
 function load_data() {
-  console.log('load_data',load_complete,data_toload.length,interval_render_done);
+  //console.log('load_data',load_complete,data_toload.length,interval_render_done);
 
 if (facts.size() > 0 && !interval_render_done) {
 // alert('bail'+facts.size()+' '+data_toload.length);
@@ -859,7 +864,7 @@ if (facts.size() > 0 && !interval_render_done) {
   
   data_toload_complete += toadd.length;
           
-  console.log('adding',toadd.length,((data_toload_complete/data_toload_total)*100));
+  //console.log('adding',toadd.length,((data_toload_complete/data_toload_total)*100));
   
   setTimeout(function() {
     d3.select('.progress-bar').classed('progress-bar-success', true).style('width', ((data_toload_complete/data_toload_total)*100)+'%');
