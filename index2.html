@@ -43,6 +43,7 @@
     <script src='/bower_components/datatables/media/js/dataTables.bootstrap.js' type='text/javascript'></script>
     <link href='/bower_components/datatables/media/css/dataTables.bootstrap.css' rel='stylesheet' type='text/css'>
     <script src='/bower_components/cubism/cubism.v1.js' type='text/javascript'></script>
+    <script src='/bower_components/d3-queue/d3-queue.js' type='text/javascript'></script>
     
     <script src='/utils.js' type='text/javascript'></script>
   </head>
@@ -171,6 +172,7 @@
     <script>
 try{
 
+
 var timeParser = d3.time.format.iso;
 var timeFormat = d3.time.format('%c');
 var timeScale = d3.time.second;
@@ -250,17 +252,21 @@ var dataTable = $("#data-table").dataTable({
 
 for (var i = 0; i < dc.chartRegistry.list().length; i++) {
   var chartI = dc.chartRegistry.list()[i];
-  chartI.on("filtered", refreshDataTable);
+  chartI.on("filtered.table", refreshDataTable);
 }
 
-function refreshDataTable() {
+function refreshDataTable(chart,filter,data) {
   dc.events.trigger(function () {
-    
+  if (data){
+    dataTable.api()
+      .rows.add(data)
+      .draw();
+  } else {
     dataTable.api()
       .clear()
       .rows.add(facts.allFiltered())
       .draw();
-      
+  }
       /*
     if (d3.extent(chartHRTimeGroup.all(), 
         function(d) { return chartHRTime.keyAccessor()(d); }).filter(function(d) { return d == undefined; }).length == 0 &&
@@ -346,19 +352,38 @@ function refreshDataTable() {
   });
 }
 
+var redraw_count = 0;
+function redraw() {
+  if (facts.size() > 0) {
+    if (redraw_count == 0) {
+      dc.renderAll();
+    } else {
+      dc.redrawAll();
+    }
+    // actually finished with loading data
+    if (load_interval == undefined)
+      refreshDataTable();
+    redraw_count++;
+  }
+}
+
 chartActivity
-  .width(200)
-  .innerRadius(20)
   .dimension(activityDim)
-  .group(activityDim.group().reduceCount())
-  .valueAccessor(function(d) { return d.value; });
+  .group(filenameDim.group().reduceCount());
   
+
 chartFilename
   .width(200)
   .innerRadius(20)
   .dimension(filenameDim)
   .group(filenameDim.group().reduceCount())
-  .valueAccessor(function(d) { return d.value; });
+  .valueAccessor(function(d) { return d.value; })
+.on('postRender', function(){
+interval_render_done = true;
+})
+.on('postRedraw', function(){
+interval_render_done = true;
+});
   
 chartLapDistance
   .width(200)
@@ -801,7 +826,52 @@ function redraw() {
   }
 }
 
+
 redraw();
+
+var interval_render_done = true;
+var load_interval = setInterval(load_data, 50);
+var load_count = 500;
+var load_complete = false;
+var data_toload = [];
+var data_toload_total = 0;
+var data_toload_complete = 0;
+
+function load_data() {
+  console.log('load_data',load_complete,data_toload.length,interval_render_done);
+
+if (facts.size() > 0 && !interval_render_done) {
+// alert('bail'+facts.size()+' '+data_toload.length);
+ return; }
+  
+  if (load_complete && !data_toload.length)
+  {
+    clearInterval(load_interval);
+    load_interval = undefined;
+    
+    d3.select('.progress').style('display', 'none');
+      refreshDataTable();
+    console.log('done loading data');
+    return;
+  }
+  
+  var toadd = data_toload.splice(0,Math.min(load_count,data_toload.length));
+  
+  data_toload_complete += toadd.length;
+          
+  console.log('adding',toadd.length,((data_toload_complete/data_toload_total)*100));
+  
+  setTimeout(function() {
+    d3.select('.progress-bar').classed('progress-bar-success', true).style('width', ((data_toload_complete/data_toload_total)*100)+'%');
+  }, 0);
+          
+  facts.add(toadd);
+ interval_render_done = false; 
+ // refreshDataTable(undefined,undefined,toadd);
+  
+  redraw();
+}
+
 
 d3.csv('/activities.csv', function(activities) {
   redraw();
@@ -809,7 +879,10 @@ d3.csv('/activities.csv', function(activities) {
   var total = activities.length;
   var complete = 0;
   
-  activities.forEach(function(a,i) {
+  var queue = d3.queue();
+
+  for(var i = 0; i < total; i++) {
+    var a = activities[i];
     
     // length represents the type of workout, in minutes
     var lenRegex = /^([0-9]+)\-([0-9]+)\-([0-9]+)$/g;
@@ -834,90 +907,126 @@ d3.csv('/activities.csv', function(activities) {
       console.log("Activity has invalid length " + a.Length,a);
     }
     
-    //dynamic stacks based on activity filename
-    chartHRTime.stack(chartWeeksGroup, a.File, chartWeeksGroupAccessor(a.File))
-    
-    d3.csv('/activities/'+a.File, function(d,i) {
+    queue.defer(function(activity, cb) {
+      d3.csv('/activities/'+activity.File, function(d,i) {
+        d._activity = activity;
       
-      d.File = a.File;
-      d.Lap = +d.Lap;
-      d.Distance = +d.Distance;
-      d.Time = timeParser.parse(d.Time);
-      d.TimeInterval = dateToInterval(d, 'Time', timeScale, 1);
-      d.HeartRate = +d['Heart Rate'];
-      delete d['Heart Rate'];
+        d.File = activity.File;
+        d.Lap = +d.Lap;
+        d.Distance = +d.Distance;
+        d.Time = timeParser.parse(d.Time);
+        d.TimeInterval = dateToInterval(d, 'Time', timeScale, 1);
+        d.HeartRate = +d['Heart Rate'];
+        delete d['Heart Rate'];
+        
+        if (d.HeartRate > 200) {
+          console.log('**MAX HR',d.HeartRate,d);
+        }
+        
+        return d;
+      }, function(err,data) {
+        d3.select('.progress-bar').classed('progress-bar-success', true).style('width', ((++complete/total)*100)+'%');
+        cb(err,data);
+      });
+    }, a);
+  }
+  
+  queue.awaitAll(function(err, activities) {
+    console.log('got all', err, activities);
+  
+    data_toload_complete = 0;
+    data_toload_total = 0;
+    for(var ai = 0; ai < activities.length; ai++) {
+      data_toload_total += activities[ai].length;
+    }
+  
+    for(var ai = 0; ai < activities.length; ai++) {
+      var a = undefined;
+      var data = activities[ai];
       
-      if (d.HeartRate > 200) {
-        console.log('**MAX HR',d.HeartRate,d);
-      }
-      
-      return d;
-    }, function(data) {
-      console.log('activity',a,data);
-      
-      d3.select('.progress-bar').classed('progress-bar-success', true).style('width', ((++complete/total)*100)+'%');
-      
-      var lengthKeys = d3.keys(a.Length);
-      
+      var lengthKeys = []
       var elapsedTime = 0;
       var movingTime = 0;
-      data.forEach(function(d,i,arr) {
-        d.Activity = a.Name;
-        d.ActivityLength = a.Length;
-        d.DistancePoint = i == 0 ? d.Distance : d.Distance - data[i-1].Distance;
-        d.TimePoint = i == 0 ? 1000 : d.Time - data[i-1].Time;
-
-        elapsedTime += d.TimePoint;
-        d.TimeElapsed = elapsedTime;
-
-        //calc speed with rolling window across multiple data points. sometimes distance is recorded as 0 between points, artifically creating "faster" points
-        var window = 5;
-        var right = Math.min(i+window,arr.length-1);
-        var left = Math.max(i-window,0);
-        var first = arr[left];
-        var last = arr[right];
-        var t = last.Time - first.Time;
-        var l = last.Distance - first.Distance;
-
-        d.SpeedMS = (l/(t/1000));
-        d.SpeedKH = d.SpeedMS * 3.6;
-        d.PaceSK = 1000 / d.SpeedMS;
-        d.PaceSM = 1609.344 / d.SpeedMS;
-        
-        if (d.SpeedKH < 1) {
-          d.LapType = "Stationary";
-          d.TimeMoving = movingTime;
-        } else {
-          movingTime += d.TimePoint;
-          d.TimeMoving = movingTime;
-
-        if (lengthKeys.length == 1) {
-          d.LapType = lengthKeys[0];
-        } else if (lengthKeys.length == 3) {
-          lengthKeys.forEach(function(k) {
-            if (d.TimeMoving >= a.Length[k][0] &&
-                d.TimeMoving <= a.Length[k][1]) {
-              d.LapType = k;
-            }
-          });
-          if (!d.LapType) {
-            d.LapType = "Unknown1";
-          }
-        } else {
-          d.LapType = "Unknown2";
+      
+      for (var i = 0; i < activities[ai].length; i++) {
+        var d = activities[ai][i];
+        if (a == undefined || i == 0) {
+          a = d._activity;
+          
+          lengthKeys = d3.keys(a.Length);
+          
+          elapsedTime = 0;
+          movingTime = 0;
+            
+          console.log('activity',a,activities[ai]);
+          
         }
-}
-      });
+        
       
-      facts.add(data);
+      //TODO dynamic stacks based on activity filename
+      //chartHRTime.stack(chartWeeksGroup, a.File, chartWeeksGroupAccessor(a.File))
       
-      redraw();
+        //data.forEach(function(d,i,arr) {
+          d.Activity = a.Name;
+          d.ActivityLength = a.Length;
+          d.DistancePoint = i == 0 ? d.Distance : d.Distance - data[i-1].Distance;
+          d.TimePoint = i == 0 ? 1000 : d.Time - data[i-1].Time;
 
-      if ((complete/total) == 1) {
-        d3.select('.progress').style('display', 'none');
+          elapsedTime += d.TimePoint;
+          d.TimeElapsed = elapsedTime;
+
+          //calc speed with rolling window across multiple data points. sometimes distance is recorded as 0 between points, artifically creating "faster" points
+          var window = 5;
+          var right = Math.min(i+window,data.length-1);
+          var left = Math.max(i-window,0);
+          var first = data[left];
+          var last = data[right];
+          var t = last.Time - first.Time;
+          var l = last.Distance - first.Distance;
+
+          d.SpeedMS = (l/(t/1000));
+          d.SpeedKH = d.SpeedMS * 3.6;
+          d.PaceSK = 1000 / d.SpeedMS;
+          d.PaceSM = 1609.344 / d.SpeedMS;
+          
+          if (d.SpeedKH < 1) {
+            d.LapType = "Stationary";
+            d.TimeMoving = movingTime;
+          } else {
+            movingTime += d.TimePoint;
+            d.TimeMoving = movingTime;
+
+          if (lengthKeys.length == 1) {
+            d.LapType = lengthKeys[0];
+          } else if (lengthKeys.length == 3) {
+            lengthKeys.forEach(function(k) {
+              if (d.TimeMoving >= a.Length[k][0] &&
+                  d.TimeMoving <= a.Length[k][1]) {
+                d.LapType = k;
+              }
+            });
+            if (!d.LapType) {
+              d.LapType = "Unknown1";
+            }
+          } else {
+            d.LapType = "Unknown2";
+          }
+  }
+
+          data_toload.push(d);
+          
+        //});
+        
+        
+        redraw();
+
+      
       }
-
-    });
+    
+    }
+    
+    
+    load_complete = true;
     
   });
 });
