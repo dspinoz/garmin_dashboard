@@ -448,9 +448,11 @@ chartHRTime
   .width(500)
   .height(200)
   .dimension(hrTimeDim)
-  .group(hrTimeGroup)
+  .group(hrTimeGroup, 'Average')
   .x(chartHRTimeXScale)
   .y(chartHRTimeYScale)
+  .elasticY(true)
+  .legend(dc.legend())
   .valueAccessor(function(d) {
     var ret = {count: 0, total: 0};
     d.value.forEach(function(activity,values) {
@@ -616,10 +618,25 @@ d3.csv('/activities.csv', function(activities) {
           movingTime = 0;
             
           console.log('activity',a,activities[ai]);
+            
+          function stackActivity(a) {
+            chartHRTime.stack(hrTimeGroup, a, function(d) {
+              var ret = {count: 0, total: 0};
+              if (d.value.has(a)) {
+                d.value.get(a).forEach(function(d) {
+                  ret.count++;
+                  ret.total += d;
+                });
+              }
+              if (ret.count == 0) return 0;
+              return ret.total/ret.count;
+            });
+          }
           
+          stackActivity(a.File);
         }
         
-      
+    
       //TODO dynamic stacks based on activity filename
       //chartHRTime.stack(chartWeeksGroup, a.File, chartWeeksGroupAccessor(a.File))
       
