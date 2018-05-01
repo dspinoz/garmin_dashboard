@@ -204,7 +204,7 @@ var chartPointsCount = dc.numberDisplay("#chart-stats-points");
 var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
 var chartTotalTime = dc.numberDisplay("#chart-stats-time");
 var chartMovingTime = dc.numberDisplay("#chart-stats-mtime");
-var chartHRTime = dc.lineChart("#chart-hr-time");
+var chartHRTime = dc.compositeChart("#chart-hr-time");
 //var chartSpeedTime = dc.seriesChart("#chart-speed-time");
 
 
@@ -442,30 +442,36 @@ var hrTimeGroup = reduceWorklog(hrTimeDim.group());
 var chartHRTimeXScale = d3.scale.linear();
     
 var chartHRTimeYScale = d3.scale.linear(); 
-
+var hrSeriesColor = d3.scale.category10();
+var hrSeriesCharts = [
+  dc.lineChart(chartHRTime)
+    .colors('grey')
+    .dashStyle([2,2])
+    .dimension(hrTimeDim)
+    .group(hrTimeGroup, 'Average')
+    .valueAccessor(function(d) {
+      var ret = {count: 0, total: 0};
+      d.value.forEach(function(activity,values) {
+        values.forEach(function(d) {
+          ret.count++;
+          ret.total += d;
+        });
+      });
+      
+      if (ret.count == 0) return 0;
+      return ret.total/ret.count;
+    })
+    .keyAccessor(function(d) { return d.key.m; })
+];
 
 chartHRTime
   .width(500)
   .height(200)
-  .dimension(hrTimeDim)
-  .group(hrTimeGroup, 'Average')
   .x(chartHRTimeXScale)
   .y(chartHRTimeYScale)
   .elasticY(true)
   .legend(dc.legend())
-  .valueAccessor(function(d) {
-    var ret = {count: 0, total: 0};
-    d.value.forEach(function(activity,values) {
-      values.forEach(function(d) {
-        ret.count++;
-        ret.total += d;
-      });
-    });
-    
-    if (ret.count == 0) return 0;
-    return ret.total/ret.count;
-  })
-  .keyAccessor(function(d) { return d.key.m; });
+  .compose(hrSeriesCharts);
 
 chartHRTime.xAxis().tickFormat(function(d) {
   return formatSeconds(d/1000,false);
@@ -620,20 +626,31 @@ d3.csv('/activities.csv', function(activities) {
           console.log('activity',a,activities[ai]);
             
           function stackActivity(a) {
-            chartHRTime.stack(hrTimeGroup, a, function(d) {
-              var ret = {count: 0, total: 0};
-              if (d.value.has(a)) {
-                d.value.get(a).forEach(function(d) {
-                  ret.count++;
-                  ret.total += d;
-                });
-              }
-              if (ret.count == 0) return 0;
-              return ret.total/ret.count;
-            });
+            
+            hrSeriesCharts.push(
+              dc.lineChart(chartHRTime)
+                .dimension(hrTimeDim)
+                .group(hrTimeGroup, a)
+                .colors(hrSeriesColor(a))
+                .valueAccessor(function(d) {
+                  var ret = {count: 0, total: 0};
+                  if (d.value.has(a)) {
+                    d.value.get(a).forEach(function(d) {
+                      ret.count++;
+                      ret.total += d;
+                    });
+                  }
+                  if (ret.count == 0) return 0;
+                  return ret.total/ret.count;
+                })
+                .keyAccessor(function(d) { return d.key.m; }));
+            
+            chartHRTime.compose(hrSeriesCharts);
+            chartHRTime.render();
           }
           
           stackActivity(a.File);
+          
         }
         
     
