@@ -184,7 +184,16 @@ function FileMovingTimeDate(d) {
   this.t = d.Time;
 }
 FileMovingTimeDate.prototype.valueOf = function() {
-  return this.m;
+  // from utils.js dateToInterval
+  var scale = timeScale;
+  var interval = 10;
+  
+  var date = this.m
+  var subHalf = scale.offset(date, -1 * interval / 2);
+  var addHalf = scale.offset(date, interval / 2);
+  date = scale.range(subHalf, addHalf, interval)[0];
+  
+  return date.getTime();
 };
 
 var filenameDim = facts.dimension(function(d) { return d.File; });
