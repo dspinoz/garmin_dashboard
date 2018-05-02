@@ -302,11 +302,27 @@ function refreshDataTable(chart,filter,data) {
       .domain(
         d3.extent(hrTimeGroup.all(), 
           function(d) { return chartHRTime.keyAccessor()(d); }));
+    
+    function get_all_values(group) {
+      return {
+        all:function () {
+          
+          var everything = [];
+          
+          group.all().forEach(function(d) {
+            d.value.forEach(function(activity,values) {
+              values.forEach(function(d) {
+                everything.push(d);
+              });
+            });
+          });
+          
+          return everything;
+        }
+      };
+    }
         
-    chartHRTimeYScale
-      .domain(
-        d3.extent(hrTimeGroup.all(), 
-          function(d) { return chartHRTime.valueAccessor()(d); })); 
+    chartHRTimeYScale.domain(d3.extent(get_all_values(hrTimeGroup).all())); 
     
     chartHRTime.redraw();
     
@@ -473,12 +489,18 @@ var chartHRTimeXScale = d3.scale.linear();
     
 var chartHRTimeYScale = d3.scale.linear(); 
 var hrSeriesColor = d3.scale.category10();
-var hrSeriesCharts = [
-  dc.lineChart(chartHRTime)
+
+
+var hrSeriesCharts = [];
+
+function addHrAverageChart(parent) {
+  var lc = dc.lineChart(parent);
+  
+  lc
     .colors('grey')
     .dashStyle([2,2])
     .dimension(hrTimeDim)
-    .group(hrTimeGroup, 'Average')
+    .group(remove_empty_bins(lc, hrTimeGroup), 'Average')
     .valueAccessor(function(d) {
       var ret = {count: 0, total: 0};
       d.value.forEach(function(activity,values) {
@@ -491,17 +513,21 @@ var hrSeriesCharts = [
       if (ret.count == 0) return 0;
       return ret.total/ret.count;
     })
-    .keyAccessor(function(d) { return d.key.m; })
-];
+    .keyAccessor(function(d) { return d.key.m; });
+    
+  hrSeriesCharts.push(lc);
+  
+  return hrSeriesCharts;
+}
 
 chartHRTime
   .width(500)
   .height(200)
   .x(chartHRTimeXScale)
   .y(chartHRTimeYScale)
-  .elasticY(true)
+  //.elasticY(true)
   .legend(dc.legend())
-  .compose(hrSeriesCharts)
+  .compose(addHrAverageChart(chartHRTime))
   .dimension(hrTimeDim);
 
 chartHRTime.xAxis().tickFormat(function(d) {
@@ -527,7 +553,7 @@ redraw();
 
 var interval_render_done = true;
 var load_interval = setInterval(load_data, 200);
-var load_count = 500;
+var load_count = 1000;
 var load_complete = false;
 var data_toload = [];
 var data_toload_total = 0;
@@ -658,30 +684,31 @@ d3.csv('/activities.csv', function(activities) {
             
           function stackActivity(a) {
             
-            hrSeriesCharts.push(
-              dc.lineChart(chartHRTime)
-                .dimension(hrTimeDim)
-                .group(hrTimeGroup, a)
-                .colors(hrSeriesColor(a))
-                .valueAccessor(function(d) {
-                  var ret = {count: 0, total: 0};
-                  if (d.value.has(a)) {
-                    d.value.get(a).forEach(function(d) {
-                      ret.count++;
-                      ret.total += d;
-                    });
-                  }
-                  if (ret.count == 0) return 0;
-                  return ret.total/ret.count;
-                })
-                .keyAccessor(function(d) { return d.key.m; }));
+            var lc = dc.lineChart(chartHRTime);
+            
+            lc.dimension(hrTimeDim)
+              .group(remove_empty_bins(lc, hrTimeGroup), a)
+              .colors(hrSeriesColor(a))
+              .valueAccessor(function(d) {
+                var ret = {count: 0, total: 0};
+                if (d.value.has(a)) {
+                  d.value.get(a).forEach(function(d) {
+                    ret.count++;
+                    ret.total += d;
+                  });
+                }
+                if (ret.count == 0) return 0;
+                return ret.total/ret.count;
+              })
+              .keyAccessor(function(d) { return d.key.m; });
+            
+            hrSeriesCharts.push(lc);
             
             chartHRTime.compose(hrSeriesCharts);
             chartHRTime.render();
           }
           
           stackActivity(a.File);
-          
         }
         
     
