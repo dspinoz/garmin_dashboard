@@ -204,6 +204,36 @@ var chartPointsCount = dc.numberDisplay("#chart-stats-points");
 var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
 var chartTotalTime = dc.numberDisplay("#chart-stats-time");
 var chartMovingTime = dc.numberDisplay("#chart-stats-mtime");
+
+
+// allow composite chart to brush!
+// https://github.com/dc-js/dc.js/issues/878
+(function() {
+    var compositeChart = dc.compositeChart;
+    dc.compositeChart = function(parent, chartGroup) {
+        var _chart = compositeChart(parent, chartGroup);
+        
+        _chart._brushing = function () {
+            var extent = _chart.extendBrush();
+            var rangedFilter = null;
+            if(!_chart.brushIsEmpty(extent)) {
+                rangedFilter = dc.filters.RangedFilter(extent[0], extent[1]);
+            }
+
+            dc.events.trigger(function () {
+                if (!rangedFilter) {
+                    _chart.filter(null);
+                } else {
+                    _chart.replaceFilter(rangedFilter);
+                }
+                _chart.redrawGroup();
+            }, dc.constants.EVENT_DELAY);
+        };
+        
+        return _chart;
+    };
+})();
+
 var chartHRTime = dc.compositeChart("#chart-hr-time");
 //var chartSpeedTime = dc.seriesChart("#chart-speed-time");
 
@@ -471,7 +501,8 @@ chartHRTime
   .y(chartHRTimeYScale)
   .elasticY(true)
   .legend(dc.legend())
-  .compose(hrSeriesCharts);
+  .compose(hrSeriesCharts)
+  .dimension(hrTimeDim);
 
 chartHRTime.xAxis().tickFormat(function(d) {
   return formatSeconds(d/1000,false);
