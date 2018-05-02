@@ -176,6 +176,8 @@ try{
 var timeParser = d3.time.format.iso;
 var timeFormat = d3.time.format('%c');
 var timeScale = d3.time.second;
+var filenameColors = d3.scale.category10();
+
 var facts = crossfilter();
 
 function FileMovingTimeDate(d) {
@@ -363,6 +365,7 @@ chartActivity
 chartFilename
   .width(200)
   .innerRadius(20)
+  .colors(filenameColors)
   .dimension(filenameDim)
   .group(filenameDim.group().reduceCount())
   .valueAccessor(function(d) { return d.value; })
@@ -497,8 +500,6 @@ var hrTimeGroup = reduceWorklog(hrTimeDim.group());
 var chartHRTimeXScale = d3.scale.linear();
     
 var chartHRTimeYScale = d3.scale.linear(); 
-var hrSeriesColor = d3.scale.category10();
-
 
 var hrSeriesCharts = [];
 
@@ -697,7 +698,7 @@ d3.csv('/activities.csv', function(activities) {
             
             lc.dimension(hrTimeDim)
               .group(remove_empty_bins(lc, hrTimeGroup), a)
-              .colors(hrSeriesColor(a))
+              .colors(filenameColors(a))
               .valueAccessor(function(d) {
                 var ret = {count: 0, total: 0};
                 if (d.value.has(a)) {
