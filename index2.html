@@ -129,6 +129,40 @@
       </div>
       
       <div class="row">
+        <div class="col-sm-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Year <small>Distance</small></h3>
+            </div>
+            <div class="panel-body">
+              <div id="chart-year"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Month <small>Distance</small></h3>
+            </div>
+            <div class="panel-body">
+              <div id="chart-month"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Not sure</h3>
+            </div>
+            <div class="panel-body">
+              <div id="chart-XXX"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      
+      <div class="row">
         <div class="col-sm-6">
           <div class="panel panel-default">
             <div class="panel-heading">
@@ -222,6 +256,8 @@ var chartMovingTime = dc.numberDisplay("#chart-stats-mtime");
 var chartAvgPace = dc.numberDisplay("#chart-stats-pace");
 var chartAvgSpeed = dc.numberDisplay("#chart-stats-speed");
 var chartAvgHR = dc.numberDisplay("#chart-stats-hr");
+var chartYear = dc.rowChart("#chart-year");
+var chartMonth = dc.rowChart("#chart-month");
 
 
 // allow composite chart to brush!
@@ -512,6 +548,31 @@ chartMovingTime
   })
   .valueAccessor(function(d) { return d; });
 
+
+var    tf = d3.time.format('%A %b %e %Y'),
+    mf = d3.time.format('%m.%b'),
+    yf = d3.time.format('%Y');
+
+var yearDim = facts.dimension(function(d) { return yf(d.Time); });
+var monthDim = facts.dimension(function(d) { return mf(d.Time); });
+
+chartYear
+  .elasticX(true)
+//  .label(function (d) { return d.key.split(".")[1]; })
+  .dimension(yearDim)
+  .group(yearDim.group().reduceSum(function(d) { return d.DistancePoint; }))
+  .xAxis().ticks([5]).tickFormat(function(d) { 
+    return d3.round(d / 1000,2) + " km";
+});
+  
+chartMonth
+  .elasticX(true)
+  .label(function (d) { return d.key.split(".")[1]; })
+  .dimension(monthDim)
+  .group(monthDim.group().reduceSum(function(d) { return d.DistancePoint; }))
+  .xAxis().ticks([5]).tickFormat(function(d) { 
+    return d3.round(d / 1000,2) + " km";
+});
 
 
 
