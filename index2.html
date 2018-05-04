@@ -118,6 +118,10 @@
                 <tr><th>Distance</th><td id="chart-stats-distance"></td></tr>
                 <tr><th>Elapsed Time</th><td id="chart-stats-time"></td></tr>
                 <tr><th>Moving Time</th><td id="chart-stats-mtime"></td></tr>
+                <tr><th>Avg Pace</th><td id="chart-stats-pace"></td></tr>
+                <tr><th>Avg Speed</th><td id="chart-stats-speed"></td></tr>
+                <tr><th>Avg HR</th><td><span id="chart-stats-hr"></span> <small>bpm</small></td></tr>
+                <tr><th>Avg Cadence</th><td id="chart-stats-cad"> spm</td></tr>
               </table>
             </div>
           </div>
@@ -143,7 +147,7 @@
             </div>
             <div class="panel-body">
               <div id="chart-speed-time"></div>
-              <table class="table table-condensed" id="chart-stats-speed"></table>
+              <table class="table table-condensed" id="chart-stats-speeddddd"></table>
             </div>
           </div>
         </div>
@@ -215,6 +219,9 @@ var chartPointsCount = dc.numberDisplay("#chart-stats-points");
 var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
 var chartTotalTime = dc.numberDisplay("#chart-stats-time");
 var chartMovingTime = dc.numberDisplay("#chart-stats-mtime");
+var chartAvgPace = dc.numberDisplay("#chart-stats-pace");
+var chartAvgSpeed = dc.numberDisplay("#chart-stats-speed");
+var chartAvgHR = dc.numberDisplay("#chart-stats-hr");
 
 
 // allow composite chart to brush!
@@ -407,13 +414,14 @@ chartLapType
   .valueAccessor(function(d) { return d.value; });
 
 chartPointsCount
-  .group(facts.groupAll().reduce(function(p) {
+  .group(facts.groupAll().reduceCount())
+/*(function(p) {
       return p + 1;
     }, function(p) {
       return p - 1;
     }, function() {
       return 0;
-    }))
+    }))*/
   .formatNumber(d3.round)
   .valueAccessor(function(d) { return d; });
   
@@ -430,6 +438,69 @@ chartTotalTime
     return formatSeconds(d3.round(d / 1000));
   })
   .valueAccessor(function(d) { return d; });
+
+chartAvgPace
+  .group(facts.groupAll().reduce
+(function(p,v) {
+      p.count++;
+      p.total+=v.PaceSK;
+      return p;
+    }, function(p,v) {
+      p.count--;
+      p.total-=v.PaceSK;
+      return p;
+    }, function() {
+      return {count:0, total:0};
+    }))
+  .formatNumber(function(d) {
+return formatSeconds(d,false) +" m/km";
+})
+  .valueAccessor(function(d) { 
+if (d.count==0) return 0;
+return d.total/d.count;
+});
+
+chartAvgSpeed
+  .group(facts.groupAll().reduce
+(function(p,v) {
+      p.count++;
+      p.total+=v.SpeedKH;
+      return p;
+    }, function(p,v) {
+      p.count--;
+      p.total-=v.SpeedKH;
+      return p;
+    }, function() {
+      return {count:0, total:0};
+    }))
+  .formatNumber(function(d) {
+return d3.round(d,3) +" km/h";
+})
+  .valueAccessor(function(d) { 
+if (d.count==0) return 0;
+return d.total/d.count;
+});
+  
+chartAvgHR
+  .group(facts.groupAll().reduce
+(function(p,v) {
+      p.count++;
+      p.total+=v.HeartRate;
+      return p;
+    }, function(p,v) {
+      p.count--;
+      p.total-=v.HeartRate;
+      return p;
+    }, function() {
+      return {count:0, total:0};
+    }))
+  .formatNumber(function(d) {
+return d3.round(d,0);
+})
+  .valueAccessor(function(d) { 
+if (d.count==0) return 0;
+return d.total/d.count;
+});
 
 chartMovingTime
   .group(facts.groupAll().reduceSum(function(d) { 
