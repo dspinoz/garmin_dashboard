@@ -207,7 +207,7 @@ var activityDim = facts.dimension(function(d) { return d.Activity; });
 var lapDim = facts.dimension(function(d) { return d.Lap; });
 var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
 var hrTimeDim = facts.dimension(function(d) { return new FileMovingTimeDate(d); });
-var speedTimeDim = facts.dimension(function(d) { return [d.File, d.TimeMoving]; });
+var speedTimeDim = facts.dimension(function(d) { return new FileMovingTimeDate(d); });
 var movingTimeDim = facts.dimension(function(d) { return d.TimeMoving; });
   
 var chartActivity = dc.pieChart("#chart-activity");
@@ -253,7 +253,7 @@ var chartAvgHR = dc.numberDisplay("#chart-stats-hr");
 })();
 
 var chartHRTime = dc.compositeChart("#chart-hr-time");
-//var chartSpeedTime = dc.seriesChart("#chart-speed-time");
+var chartSpeedTime = dc.compositeChart("#chart-speed-time");
 
 
 var dataTable = $("#data-table").dataTable({
@@ -341,8 +341,10 @@ function refreshDataTable(chart,filter,data) {
     }
         
     chartHRTimeYScale.domain(d3.extent(get_all_values(hrTimeGroup).all())); 
+    chartSpeedTimeYScale.domain(d3.extent(get_all_values(speedTimeGroup).all())); 
     
     chartHRTime.redraw();
+    chartSpeedTime.redraw();
     
   });
 }
@@ -513,15 +515,21 @@ chartMovingTime
 
 
 
-function reduceWorklog(group) {
-  function kfn(d) {
+function reduceWorklog(group, a_kfn, a_vfn) {
+  function default_kfn(d) {
     return d.File;
   }
   
-  function vfn(d) {
+  function default_vfn(d) {
     return d['HeartRate'];
   }
+
+  var vfn = a_vfn;
+  if (!vfn) vfn = default_vfn;
   
+  var kfn = a_kfn;
+  if (!kfn) kfn = default_kfn;
+
   function add(p, v, nf) {
     if (!p.has(kfn(v))) {
       p.set(kfn(v), []);
@@ -567,13 +575,61 @@ function reduceWorklog(group) {
 
 
 var hrTimeGroup = reduceWorklog(hrTimeDim.group());
+var speedTimeGroup = reduceWorklog(hrTimeDim.group(),
+undefined,
+  function (d) {
+//stationary
+if (d.SpeedKH < 1) {
+return 0; 
+}
+/*
+//walking - makes chart pointy
+if (d.SpeedKH < 6) {
+return 0;
+}
+//flying
+if (d.SpeedKH > 18) {
+return 0;
+}
+*/
+    return d.PaceSK;
+  }
+);
 
 var chartHRTimeXScale = d3.scale.linear();
     
 var chartHRTimeYScale = d3.scale.linear(); 
+var chartSpeedTimeYScale = d3.scale.linear(); 
 
 var hrSeriesCharts = [];
+var speedSeriesCharts = [];
 
+function addSpeedAverageChart(parent) {
+  var lc = dc.lineChart(parent);
+  
+  lc
+    .colors('grey')
+    .dashStyle([2,2])
+    .dimension(hrTimeDim)
+    .group(remove_empty_bins(lc, speedTimeGroup), 'Average')
+    .valueAccessor(function(d) {
+      var ret = {count: 0, total: 0};
+      d.value.forEach(function(activity,values) {
+        values.forEach(function(d) {
+          ret.count++;
+          ret.total += d;
+        });
+      });
+      
+      if (ret.count == 0) return 0;
+      return ret.total/ret.count;
+    })
+    .keyAccessor(function(d) { return d.key.m; });
+    
+  speedSeriesCharts.push(lc);
+  
+  return speedSeriesCharts;
+}
 function addHrAverageChart(parent) {
   var lc = dc.lineChart(parent);
   
@@ -601,6 +657,24 @@ function addHrAverageChart(parent) {
   return hrSeriesCharts;
 }
 
+chartSpeedTime
+  .width(500)
+  .height(200)
+  .x(chartHRTimeXScale)
+  .y(chartSpeedTimeYScale)
+  .legend(dc.legend())
+  .compose(addSpeedAverageChart(chartSpeedTime))
+  .dimension(hrTimeDim);
+
+chartSpeedTime.xAxis().tickFormat(function(d) {
+  return formatSeconds(d/1000,false);
+});
+
+chartSpeedTime.margins().left = 40;
+chartSpeedTime.yAxis().tickFormat(function(d) {
+  return formatSeconds(d,false);
+});
+
 chartHRTime
   .width(500)
   .height(200)
@@ -611,6 +685,7 @@ chartHRTime
   .compose(addHrAverageChart(chartHRTime))
   .dimension(hrTimeDim);
 
+chartHRTime.margins().left = 40;
 chartHRTime.xAxis().tickFormat(function(d) {
   return formatSeconds(d/1000,false);
 });
@@ -765,7 +840,30 @@ d3.csv('/activities.csv', function(activities) {
             
           function stackActivity(a) {
             
-            var lc = dc.lineChart(chartHRTime);
+            var lc = dc.lineChart(chartSpeedTime);
+            
+            lc.dimension(hrTimeDim)
+              .group(remove_empty_bins(lc, speedTimeGroup), a)
+              .colors(filenameColors(a))
+              .valueAccessor(function(d) {
+                var ret = {count: 0, total: 0};
+                if (d.value.has(a)) {
+                  d.value.get(a).forEach(function(d) {
+                    ret.count++;
+                    ret.total += d;
+                  });
+                }
+                if (ret.count == 0) return 0;
+                return ret.total/ret.count;
+              })
+              .keyAccessor(function(d) { return d.key.m; });
+            
+            speedSeriesCharts.push(lc);
+            chartSpeedTime.compose(speedSeriesCharts);
+            chartSpeedTime.render();
+            
+
+           lc = dc.lineChart(chartHRTime);
             
             lc.dimension(hrTimeDim)
               .group(remove_empty_bins(lc, hrTimeGroup), a)
@@ -782,9 +880,7 @@ d3.csv('/activities.csv', function(activities) {
                 return ret.total/ret.count;
               })
               .keyAccessor(function(d) { return d.key.m; });
-            
             hrSeriesCharts.push(lc);
-            
             chartHRTime.compose(hrSeriesCharts);
             chartHRTime.render();
           }
