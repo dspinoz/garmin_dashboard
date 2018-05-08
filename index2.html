@@ -269,13 +269,75 @@ FileMovingTimeDate.prototype.valueOf = function() {
   return date.getTime();
 };
 
+
+function datatable_reduce(group) {
+  function add(p, v, nf) {
+    if (!p.has(v.File)) {
+      p.set(v.File, d3.map());
+    }
+    
+    if (p.get(v.File).has(v.PointIndex)) {
+      console.log('filetable already has index for point',v.File,v.PointIndex,p.get(v.File).has(v.PointIndex));
+    }
+    
+    p.get(v.File).set(v.PointIndex,v);
+    return p;
+  }
+  
+  function rem(p, v, nf) {
+    
+    if (!p.has(v.File)) {
+      return p;
+    }
+    
+    if (!p.get(v.File).has(v.PointIndex)) {
+      return p;
+    }
+    
+    p.get(v.File).remove(v.PointIndex);
+    
+    if (p.get(v.File).empty()) {
+      p.remove(v.File);
+    }
+    return p;
+  }
+  
+  function init() {
+    return d3.map();
+  }
+  
+  return group.reduce(add,rem,init);
+}
+
 var filenameDim = facts.dimension(function(d) { return d.File; });
 var activityDim = facts.dimension(function(d) { return d.Activity; });
 var lapDim = facts.dimension(function(d) { return d.Lap; });
 var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
 var hrTimeDim = facts.dimension(function(d) { return new FileMovingTimeDate(d); });
+var dataTableDim = facts.dimension(function(d) { 
+  // from utils.js dateToInterval
+  var scale = timeScale;
+  var interval = 10;
+  
+  var date = d.TimeMoving;
+  var subHalf = scale.offset(date, -1 * interval / 2);
+  var addHalf = scale.offset(date, interval / 2);
+  date = scale.range(subHalf, addHalf, interval)[0];
+  
+  return date.getTime();
+});
 var speedTimeDim = facts.dimension(function(d) { return new FileMovingTimeDate(d); });
 var movingTimeDim = facts.dimension(function(d) { return d.TimeMoving; });
+var dataTableGroup = flatten_group(datatable_reduce(dataTableDim.group()), function(arr) {
+  return function(d) {
+    d.value.values().forEach(function(points) {
+      points.values().forEach(function(p) {
+        arr.push(p);
+      });
+    });
+    return d;
+  }
+});
 var timeHRDim = facts.dimension(function(d) { return hrf(d.Time); });
 var timeWDDim = facts.dimension(function(d) { return wdf(d.Time); });
 
@@ -371,12 +433,23 @@ var dataTable = $("#data-table").dataTable({
   ]
 });
 
+function flatten_group(group, fn) {
+  return {
+    all:function () {
+      var everything = [];
+      group.all().forEach(fn(everything));
+      return everything;
+    }
+  };
+}
+
 for (var i = 0; i < dc.chartRegistry.list().length; i++) {
   var chartI = dc.chartRegistry.list()[i];
   chartI.on("filtered.table", refreshDataTable);
 }
 
 function refreshDataTable(chart,filter,data) {
+  
   dc.events.trigger(function () {
     if (data){
       dataTable.api()
@@ -385,7 +458,7 @@ function refreshDataTable(chart,filter,data) {
     } else {
       dataTable.api()
         .clear()
-        .rows.add(facts.allFiltered())
+        .rows.add(dataTableGroup.all())
         .draw();
     }
     
@@ -1006,6 +1079,7 @@ d3.csv('/activities.csv', function(activities) {
       //chartHRTime.stack(chartWeeksGroup, a.File, chartWeeksGroupAccessor(a.File))
       
         //data.forEach(function(d,i,arr) {
+          d.PointIndex = i;
           d.Activity = a.Name;
           d.ActivityLength = a.Length;
           d.DistancePoint = i == 0 ? d.Distance : d.Distance - data[i-1].Distance;
