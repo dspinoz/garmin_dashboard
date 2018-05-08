@@ -129,7 +129,7 @@
       </div>
       
       <div class="row">
-        <div class="col-sm-4">
+        <div class="col-sm-3">
           <div class="panel panel-default">
             <div class="panel-heading">
               <h3 class="panel-title">Year <small>Distance</small></h3>
@@ -139,7 +139,7 @@
             </div>
           </div>
         </div>
-        <div class="col-sm-4">
+        <div class="col-sm-3">
           <div class="panel panel-default">
             <div class="panel-heading">
               <h3 class="panel-title">Month <small>Distance</small></h3>
@@ -149,13 +149,44 @@
             </div>
           </div>
         </div>
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Day <small>Distance</small></h3>
+            </div>
+            <div class="panel-body">
+              <div id="chart-weekday"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Hour <small>Distance</small></h3>
+            </div>
+            <div class="panel-body">
+              <div id="chart-hour"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+        
+        
+      <div class="row">
         <div class="col-sm-4">
           <div class="panel panel-default">
             <div class="panel-heading">
               <h3 class="panel-title">Not sure</h3>
             </div>
             <div class="panel-body">
-              <div id="chart-XXX"></div>
+              <table class="table table-bordered table-hover" id="file-table">
+                <thead>
+                  <tr>
+                    <th>File</th>
+                    <th>Activity</th>
+                  </tr>
+                </thead>
+              </table>
             </div>
           </div>
         </div>
@@ -213,6 +244,8 @@ try{
 
 var timeParser = d3.time.format.iso;
 var timeFormat = d3.time.format('%c');
+var hrf = d3.time.format('%H');
+var wdf = d3.time.format('%w.%A');
 var timeScale = d3.time.second;
 var filenameColors = d3.scale.category10();
 
@@ -243,7 +276,9 @@ var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
 var hrTimeDim = facts.dimension(function(d) { return new FileMovingTimeDate(d); });
 var speedTimeDim = facts.dimension(function(d) { return new FileMovingTimeDate(d); });
 var movingTimeDim = facts.dimension(function(d) { return d.TimeMoving; });
-  
+var timeHRDim = facts.dimension(function(d) { return hrf(d.Time); });
+var timeWDDim = facts.dimension(function(d) { return wdf(d.Time); });
+
 var chartActivity = dc.pieChart("#chart-activity");
 var chartFilename = dc.pieChart("#chart-filename");
 var chartLapDistance = dc.pieChart("#chart-lap-distance");
@@ -258,6 +293,8 @@ var chartAvgSpeed = dc.numberDisplay("#chart-stats-speed");
 var chartAvgHR = dc.numberDisplay("#chart-stats-hr");
 var chartYear = dc.rowChart("#chart-year");
 var chartMonth = dc.rowChart("#chart-month");
+var chartTimeHR = dc.rowChart("#chart-hour");
+var chartTimeWD = dc.rowChart("#chart-weekday");
 
 
 // allow composite chart to brush!
@@ -550,7 +587,7 @@ chartMovingTime
 
 
 var    tf = d3.time.format('%A %b %e %Y'),
-    mf = d3.time.format('%m.%b'),
+    mf = d3.time.format('%m.%B'),
     yf = d3.time.format('%Y');
 
 var yearDim = facts.dimension(function(d) { return yf(d.Time); });
@@ -574,7 +611,22 @@ chartMonth
     return d3.round(d / 1000,2) + " km";
 });
 
+chartTimeHR
+  .elasticX(true)
+  .dimension(timeHRDim)
+  .group(timeHRDim.group().reduceSum(function(d) { return d.DistancePoint; }))
+  .xAxis().ticks([5]).tickFormat(function(d) { 
+    return d3.round(d / 1000,2) + " km";
+});
 
+chartTimeWD
+  .elasticX(true)
+  .dimension(timeWDDim)
+  .group(timeWDDim.group().reduceSum(function(d) { return d.DistancePoint; }))
+  .label(function (d) { return d.key.split(".")[1]; })
+  .xAxis().ticks([5]).tickFormat(function(d) { 
+    return d3.round(d / 1000,2) + " km";
+});
 
 function reduceWorklog(group, a_kfn, a_vfn) {
   function default_kfn(d) {
