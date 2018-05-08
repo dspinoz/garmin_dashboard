@@ -309,6 +309,30 @@ function datatable_reduce(group) {
   return group.reduce(add,rem,init);
 }
 
+function filetable_reduce(group) {
+  function add(p, v, nf) {
+    if (p.has(v.PointIndex)) {
+      console.log('filetable already has index for point',v.PointIndex,p.get(v.PointIndex));
+    }
+    p.set(v.PointIndex,v);
+    return p;
+  }
+  
+  function rem(p, v, nf) {
+    if (p.has(v.PointIndex)) {
+      p.remove(v.PointIndex);
+    }
+    return p;
+  }
+  
+  function init() {
+    return d3.map();
+  }
+  
+  return group.reduce(add,rem,init);
+}
+
+
 var filenameDim = facts.dimension(function(d) { return d.File; });
 var activityDim = facts.dimension(function(d) { return d.Activity; });
 var lapDim = facts.dimension(function(d) { return d.Lap; });
@@ -338,6 +362,8 @@ var dataTableGroup = flatten_group(datatable_reduce(dataTableDim.group()), funct
     return d;
   }
 });
+var fileTableDim = facts.dimension(function(d) { return [d.File, d.Activity]; });
+var fileTableGroup = filetable_reduce(filenameDim.group());
 var timeHRDim = facts.dimension(function(d) { return hrf(d.Time); });
 var timeWDDim = facts.dimension(function(d) { return wdf(d.Time); });
 
@@ -433,6 +459,30 @@ var dataTable = $("#data-table").dataTable({
   ]
 });
 
+
+var fileTable = $("#file-table").dataTable({
+  paging:false,
+  searching:false,
+  bInfo: false, //remove showing x of y
+  select: true,
+  "order": [[0, 'desc']],
+  columnDefs: [
+    {
+      targets: 0,
+      data: function(d) { return d.key; }
+    },
+    {
+      targets: 1,
+      data: function(d) { 
+        return JSON.stringify(d3.set(d.value.values().map(function(d) {
+          return d.Activity;
+        })).values());
+      }
+    }
+  ]
+});
+
+
 function flatten_group(group, fn) {
   return {
     all:function () {
@@ -461,6 +511,11 @@ function refreshDataTable(chart,filter,data) {
         .rows.add(dataTableGroup.all())
         .draw();
     }
+    
+    fileTable.api()
+      .clear()
+      .rows.add(fileTableGroup.all())
+      .draw();
     
     chartHRTimeXScale
       .domain(
