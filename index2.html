@@ -72,61 +72,6 @@
     </nav>
 
     <div class="container" role="main">
-
-      <div class="row">
-        <div class="col-sm-3">
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h3 class="panel-title">Activity</h3>
-            </div>
-            <div class="panel-body">
-              <div id="chart-activity"></div>
-              <div id="chart-filename"></div>
-            </div>
-          </div>
-        </div>
-        <div class="col-sm-3">
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h3 class="panel-title">Lap <small>Distance / Time</small></h3>
-            </div>
-            <div class="panel-body">
-              <div id="chart-lap-distance"></div>
-              <div id="chart-lap-time"></div>
-              <table class="table table-condensed" id="chart-stats-lap"></table>
-            </div>
-          </div>
-        </div>
-        <div class="col-sm-3">
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h3 class="panel-title">Lap <small>Type</small></h3>
-            </div>
-            <div class="panel-body">
-              <div id="chart-lap-type"></div>
-            </div>
-          </div>
-        </div>
-        <div class="col-sm-3">
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h3 class="panel-title">Stats</h3>
-            </div>
-            <div class="panel-body">
-              <table class="table table-condensed">
-                <tr><th>Points</th><td id="chart-stats-points"></td></tr>
-                <tr><th>Distance</th><td id="chart-stats-distance"></td></tr>
-                <tr><th>Elapsed Time</th><td id="chart-stats-time"></td></tr>
-                <tr><th>Moving Time</th><td id="chart-stats-mtime"></td></tr>
-                <tr><th>Avg Pace</th><td id="chart-stats-pace"></td></tr>
-                <tr><th>Avg Speed</th><td id="chart-stats-speed"></td></tr>
-                <tr><th>Avg HR</th><td><span id="chart-stats-hr"></span> <small>bpm</small></td></tr>
-                <tr><th>Avg Cadence</th><td id="chart-stats-cad"> spm</td></tr>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
       
       <div class="row">
         <div class="col-sm-3">
@@ -171,6 +116,68 @@
         </div>
       </div>
         
+      <div class="row">
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Activity</h3>
+            </div>
+            <div class="panel-body">
+              <div id="chart-activity"></div>
+              <div id="chart-filename"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Lap <small>Distance / Time</small></h3>
+            </div>
+            <div class="panel-body">
+              <table id="chart-lap-distance" class="table table-condensed">
+<thead>
+<tr>
+<th>Lap</th>
+<th>Type</th>
+<th>Activity</th>
+</tr>
+</thead>
+</table>
+              <div id="chart-lap-time"></div>
+              <table class="table table-condensed" id="chart-stats-lap"></table>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Lap <small>Type</small></h3>
+            </div>
+            <div class="panel-body">
+              <div id="chart-lap-type"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Stats</h3>
+            </div>
+            <div class="panel-body">
+              <table class="table table-condensed">
+                <tr><th>Points</th><td id="chart-stats-points"></td></tr>
+                <tr><th>Distance</th><td id="chart-stats-distance"></td></tr>
+                <tr><th>Elapsed Time</th><td id="chart-stats-time"></td></tr>
+                <tr><th>Moving Time</th><td id="chart-stats-mtime"></td></tr>
+                <tr><th>Avg Pace</th><td id="chart-stats-pace"></td></tr>
+                <tr><th>Avg Speed</th><td id="chart-stats-speed"></td></tr>
+                <tr><th>Avg HR</th><td><span id="chart-stats-hr"></span> <small>bpm</small></td></tr>
+                <tr><th>Avg Cadence</th><td id="chart-stats-cad"> spm</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
         
       <div class="row">
         <div class="col-sm-4">
@@ -367,11 +374,11 @@ var fileTableGroup = filetable_reduce(filenameDim.group());
 var timeHRDim = facts.dimension(function(d) { return hrf(d.Time); });
 var timeWDDim = facts.dimension(function(d) { return wdf(d.Time); });
 
-var chartActivity = dc.pieChart("#chart-activity");
-var chartFilename = dc.pieChart("#chart-filename");
-var chartLapDistance = dc.pieChart("#chart-lap-distance");
+var chartActivity = dc.rowChart("#chart-activity");
+var chartFilename = dc.rowChart("#chart-filename");
+var chartLapDistance = dc.dataTable("#chart-lap-distance");
 var chartLapTime = dc.pieChart("#chart-lap-time");
-var chartLapType = dc.pieChart("#chart-lap-type");
+var chartLapType = dc.rowChart("#chart-lap-type");
 var chartPointsCount = dc.numberDisplay("#chart-stats-points");
 var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
 var chartTotalTime = dc.numberDisplay("#chart-stats-time");
@@ -566,29 +573,47 @@ function redraw() {
 }
 
 chartActivity
-  .width(200)
-  .innerRadius(20)
   .dimension(activityDim)
-  .group(activityDim.group().reduceCount())
-  .valueAccessor(function(d) { return d.value; });
+  .elasticX(true)
+  .group(activityDim.group().reduceSum(function(d) { return d.DistancePoint; }))
+  .xAxis().ticks([5]).tickFormat(function(d) { 
+    return d3.round(d / 1000,2) + " km";
+});
 
 chartFilename
-  .width(200)
-  .innerRadius(20)
   .colors(filenameColors)
   .dimension(filenameDim)
-  .group(filenameDim.group().reduceCount())
-  .valueAccessor(function(d) { return d.value; })
 .on('postRender', function(){
 interval_render_done = true;
 })
 .on('postRedraw', function(){
 interval_render_done = true;
+})
+  .elasticX(true)
+  .group(filenameDim.group().reduceSum(function(d) { return d.DistancePoint; }))
+  .xAxis().ticks([5]).tickFormat(function(d) { 
+    return d3.round(d / 1000,2) + " km";
 });
   
 chartLapDistance
   .width(200)
-  .innerRadius(20)
+  .height(200)
+  .dimension(lapDim)
+  .group(function(d) {return d.Activity; })
+  .columns([
+    function(d) { return d.Lap; },
+    function(d) { return d.LapType; },
+    function(d) { return d.Activity; }
+  ]);
+
+
+
+
+/*
+  .elasticX(true)
+  .cap(8)
+  .ordering(function(d) { return d.value; })
+  //.data(function(g) { return g.top(5); })
   .dimension(lapDim)
   .group(lapDim.group().reduceSum(function(d) { return d.DistancePoint; }))
   .valueAccessor(function(d) { return d.value; })
@@ -597,7 +622,10 @@ chartLapDistance
   })
   .on('renderlet', function(chart) {
     //console.log('lap distance', chart.data(), chart.group().all());
-  });
+  })
+  .xAxis().ticks([5]).tickFormat(function(d) { 
+    return d3.round(d / 1000,2) + " km";
+});*/
   
 chartLapTime
   .width(200)
@@ -610,21 +638,15 @@ chartLapTime
   });
 
 chartLapType
-  .width(200)
-  .innerRadius(20)
   .dimension(lapTypeDim)
-  .group(lapTypeDim.group().reduceCount())
-  .valueAccessor(function(d) { return d.value; });
+  .elasticX(true)
+  .group(lapTypeDim.group().reduceSum(function(d) { return d.DistancePoint; }))
+  .xAxis().ticks([5]).tickFormat(function(d) { 
+    return d3.round(d / 1000,2) + " km";
+});
 
 chartPointsCount
   .group(facts.groupAll().reduceCount())
-/*(function(p) {
-      return p + 1;
-    }, function(p) {
-      return p - 1;
-    }, function() {
-      return 0;
-    }))*/
   .formatNumber(d3.round)
   .valueAccessor(function(d) { return d; });
   
@@ -849,6 +871,7 @@ function addSpeedAverageChart(parent) {
   var lc = dc.lineChart(parent);
   
   lc
+    .interpolate('step')
     .colors('grey')
     .dashStyle([2,2])
     .dimension(hrTimeDim)
@@ -875,6 +898,7 @@ function addHrAverageChart(parent) {
   var lc = dc.lineChart(parent);
   
   lc
+    .interpolate('basis')
     .colors('grey')
     .dashStyle([2,2])
     .dimension(hrTimeDim)
