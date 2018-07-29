@@ -46,7 +46,7 @@ def tcx():
   
 @route('/activities.csv')
 def activities():
-  return static_file('activities.csv', root='.')
+  return static_file('activities/Activities.txt', root='.')
 
 run(host='localhost', port=8000)
 

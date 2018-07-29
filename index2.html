@@ -1027,6 +1027,11 @@ d3.csv('/activities.csv', function(activities) {
   for(var i = 0; i < total; i++) {
     var a = activities[i];
     
+    if (a.File == "" || a.Name == undefined) {
+      console.log('Skipped',a);
+      continue;
+    }
+    
     // length represents the type of workout, in minutes
     var lenRegex = /^([0-9]+)\-([0-9]+)\-([0-9]+)$/g;
     var lenMatch = lenRegex.exec(a.Length);
