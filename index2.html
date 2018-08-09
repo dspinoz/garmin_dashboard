@@ -137,9 +137,8 @@
               <table id="chart-lap-distance" class="table table-condensed">
 <thead>
 <tr>
-<th>Lap</th>
 <th>Type</th>
-<th>Activity</th>
+<th>Distance</th>
 </tr>
 </thead>
 </table>
@@ -344,6 +343,7 @@ function filetable_reduce(group) {
 var filenameDim = facts.dimension(function(d) { return d.File; });
 var activityDim = facts.dimension(function(d) { return d.Activity; });
 var lapDim = facts.dimension(function(d) { return d.Lap; });
+var activityLapDim = facts.dimension(function(d) { return d.Activity; });
 var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
 var hrTimeDim = facts.dimension(function(d) { return new FileMovingTimeDate(d); });
 var dataTableDim = facts.dimension(function(d) { 
@@ -509,6 +509,8 @@ for (var i = 0; i < dc.chartRegistry.list().length; i++) {
 
 function refreshDataTable(chart,filter,data) {
   
+  return;
+  
   dc.events.trigger(function () {
     if (data){
       dataTable.api()
@@ -600,12 +602,34 @@ interval_render_done = true;
 chartLapDistance
   .width(200)
   .height(200)
-  .dimension(lapDim)
-  .group(function(d) {return d.Activity; })
+  .size(50)
+  .dimension({
+      bottom: function(sz) {
+        var arr = activityLapDim.top(Infinity);
+        
+        var nested = d3.nest()
+        .key(function(d) { return d.Activity; })
+        .key(function(d) { return d.LapType })
+        .rollup(function(a) { return d3.sum(a, function(d) { return d.DistancePoint; });  })
+        .entries(arr);
+        
+        var values = []
+        nested.forEach(function(activity) {
+          activity.values.forEach(function(lapType) {
+            values.push({
+              Activity: activity.key,
+              LapType: lapType.key,
+              DistanceType: lapType.values
+            });
+          });
+        });
+        return values;
+      }
+  })
+  .group(function(d) { return d.Activity; })
   .columns([
-    function(d) { return d.Lap; },
     function(d) { return d.LapType; },
-    function(d) { return d.Activity; }
+    function(d) { return d3.round(d.DistanceType / 1000,2) + " km"; }
   ]);
 
 
@@ -998,7 +1022,7 @@ redraw();
 
 var interval_render_done = true;
 var load_interval = setInterval(load_data, 200);
-var load_count = 1000;
+var load_count = 5000;
 var load_complete = false;
 var data_toload = [];
 var data_toload_total = 0;
@@ -1041,6 +1065,7 @@ if (facts.size() > 0 && !interval_render_done) {
 
 
 d3.csv('/activities.csv', function(activities) {
+  console.log('activities',activities);
   redraw();
   
   var total = activities.length;
@@ -1051,7 +1076,7 @@ d3.csv('/activities.csv', function(activities) {
   for(var i = 0; i < total; i++) {
     var a = activities[i];
     
-    if (a.File == "" || a.Name == undefined) {
+    if (a.File == "" || a.Name == undefined || a.File[0] == '#') {
       console.log('Skipped',a);
       continue;
     }
@@ -1080,6 +1105,7 @@ d3.csv('/activities.csv', function(activities) {
     }
     
     queue.defer(function(activity, cb) {
+      console.log('/activities/'+activity.File);
       d3.csv('/activities/'+activity.File, function(d,i) {
         d._activity = activity;
       
@@ -1097,6 +1123,7 @@ d3.csv('/activities.csv', function(activities) {
         
         return d;
       }, function(err,data) {
+        console.log(err,data);
         d3.select('.progress-bar').classed('progress-bar-success', true).style('width', ((++complete/total)*100)+'%');
         cb(err,data);
       });
