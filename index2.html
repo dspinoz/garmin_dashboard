@@ -26,6 +26,14 @@
       .axis.top, .axis.bottom { padding: 0; }
     }
     
+    #chart-lap-distance tbody tr.dc-table-row {
+        cursor: pointer;
+    }
+
+    #chart-lap-distance tbody tr.dc-table-row:hover {
+        fill-opacity: 0.6;
+    }
+    
     </style>
     
     <!-- Bootstrap core JavaScript
@@ -604,6 +612,12 @@ chartLapDistance
   .height(200)
   .size(50)
   .dimension({
+      filter: function(f) {
+        activityLapDim.filter(f);
+      },
+      filterExact: function(v) {
+        activityLapDim.filterExact(v);
+      },
       bottom: function(sz) {
         var arr = activityLapDim.top(Infinity);
         
@@ -630,7 +644,19 @@ chartLapDistance
   .columns([
     function(d) { return d.LapType; },
     function(d) { return d3.round(d.DistanceType / 1000,2) + " km"; }
-  ]);
+  ])
+  .on('renderlet', function(chart) {
+    
+    chart.selectAll('.dc-table-row')
+      .on('click', function(d) {
+        dc.events.trigger(function () {
+          chart.filter(d.LapType);
+          chart.redrawGroup();
+        });
+        
+      });
+    
+  });
 
 
 
