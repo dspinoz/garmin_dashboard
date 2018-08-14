@@ -142,7 +142,7 @@
               <h3 class="panel-title">Lap <small>Distance / Time</small></h3>
             </div>
             <div class="panel-body">
-              <table id="chart-lap-distance" class="table table-condensed">
+              <table id="chart-lap-distance" class="table table-condensed table-hover">
 <thead>
 <tr>
 <th>Type</th>
@@ -606,7 +606,7 @@ interval_render_done = true;
     return d3.round(d / 1000,2) + " km";
 });
   
-var keyFunc = function(d) { return d._activity.File + d.Index; };
+var keyFunc = function(d) { return d.File + d.PointIndex; };
 var lapDistanceGroup = lapTypeDim.group().reduce(
 	function(p,v) {
 	  if (!p.has(keyFunc(v))) {
@@ -622,6 +622,8 @@ var lapDistanceGroup = lapTypeDim.group().reduce(
       return d3.map();
     });
 
+var chartLapDistanceActiveRows = d3.set();
+
 chartLapDistance
   .width(200)
   .height(200)
@@ -633,8 +635,14 @@ chartLapDistance
       filterExact: function(v) {
         lapTypeDim.filterExact(v);
       },
+      filterFunction: function(f) {
+        lapTypeDim.filterFunction(f);
+      },
+      filterRange: function(r) {
+        lapTypeDim.filterRange(r);
+      },
       bottom: function(sz) {
-        var gdata = lapDistanceGroup.top(Infinity);
+        var gdata = lapDistanceGroup.all();
 		var arr = [];
 		gdata.forEach(function(typedata) {
 			typedata.value.forEach(function(k,v) {
@@ -669,7 +677,17 @@ chartLapDistance
   .on('renderlet', function(chart) {
     
     chart.selectAll('.dc-table-row')
+      .classed('active', function(d) { 
+        return chartLapDistanceActiveRows.has(d.Activity+d.LapType); })
       .on('click', function(d) {
+        if (chartLapDistanceActiveRows.has(d.Activity+d.LapType)) {
+          d3.select(this).classed('active',false);
+          chartLapDistanceActiveRows.remove(d.Activity+d.LapType);
+        } else {
+          d3.select(this).classed('active',true);
+          chartLapDistanceActiveRows.add(d.Activity+d.LapType);
+        }
+        
         dc.events.trigger(function () {
           chart.filter(d.LapType);
           chart.redrawGroup();
