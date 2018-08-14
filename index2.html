@@ -351,7 +351,6 @@ function filetable_reduce(group) {
 var filenameDim = facts.dimension(function(d) { return d.File; });
 var activityDim = facts.dimension(function(d) { return d.Activity; });
 var lapDim = facts.dimension(function(d) { return d.Lap; });
-var activityLapDim = facts.dimension(function(d) { return d.Activity; });
 var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
 var hrTimeDim = facts.dimension(function(d) { return new FileMovingTimeDate(d); });
 var dataTableDim = facts.dimension(function(d) { 
@@ -613,13 +612,13 @@ chartLapDistance
   .size(50)
   .dimension({
       filter: function(f) {
-        activityLapDim.filter(f);
+        lapTypeDim.filter(f);
       },
       filterExact: function(v) {
-        activityLapDim.filterExact(v);
+        lapTypeDim.filterExact(v);
       },
       bottom: function(sz) {
-        var arr = activityLapDim.top(Infinity);
+        var arr = lapTypeDim.top(Infinity);
         
         var nested = d3.nest()
         .key(function(d) { return d.Activity; })
