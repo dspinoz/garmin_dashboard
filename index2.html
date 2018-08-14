@@ -158,10 +158,10 @@
         <div class="col-sm-3">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title">Lap <small>Type</small></h3>
+              <h3 class="panel-title">Activity <small>Time</small></h3>
             </div>
             <div class="panel-body">
-              <div id="chart-lap-type"></div>
+              <div id="chart-activity-time"></div>
             </div>
           </div>
         </div>
@@ -386,7 +386,6 @@ var chartActivity = dc.rowChart("#chart-activity");
 var chartFilename = dc.rowChart("#chart-filename");
 var chartLapDistance = dc.dataTable("#chart-lap-distance");
 var chartLapTime = dc.pieChart("#chart-lap-time");
-var chartLapType = dc.rowChart("#chart-lap-type");
 var chartPointsCount = dc.numberDisplay("#chart-stats-points");
 var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
 var chartTotalTime = dc.numberDisplay("#chart-stats-time");
@@ -728,13 +727,6 @@ chartLapTime
     return d.key + ": " + formatSeconds(d3.round(d.value / 1000));
   });
 
-chartLapType
-  .dimension(lapTypeDim)
-  .elasticX(true)
-  .group(lapTypeDim.group().reduceSum(function(d) { return d.DistancePoint; }))
-  .xAxis().ticks([5]).tickFormat(function(d) { 
-    return d3.round(d / 1000,2) + " km";
-});
 
 chartPointsCount
   .group(facts.groupAll().reduceCount())
