@@ -606,6 +606,22 @@ interval_render_done = true;
     return d3.round(d / 1000,2) + " km";
 });
   
+var keyFunc = function(d) { return d._activity.File + d.Index; };
+var lapDistanceGroup = lapTypeDim.group().reduce(
+	function(p,v) {
+	  if (!p.has(keyFunc(v))) {
+	    p.set(keyFunc(v),v);
+	  }
+	  return p;
+    }, function(p,v) {
+	  if (p.has(keyFunc(v))) {
+	    p.remove(keyFunc(v));
+	  }
+      return p;
+    }, function() {
+      return d3.map();
+    });
+
 chartLapDistance
   .width(200)
   .height(200)
@@ -618,7 +634,13 @@ chartLapDistance
         lapTypeDim.filterExact(v);
       },
       bottom: function(sz) {
-        var arr = lapTypeDim.top(Infinity);
+        var gdata = lapDistanceGroup.top(Infinity);
+		var arr = [];
+		gdata.forEach(function(typedata) {
+			typedata.value.forEach(function(k,v) {
+				arr.push(v);
+			});
+		});
         
         var nested = d3.nest()
         .key(function(d) { return d.Activity; })
