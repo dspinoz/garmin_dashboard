@@ -26,11 +26,13 @@
       .axis.top, .axis.bottom { padding: 0; }
     }
     
-    #chart-lap-distance tbody tr.dc-table-row {
+    #chart-lap-distance tbody tr.dc-table-row,
+    #chart-activity-time tbody tr.dc-table-row {
         cursor: pointer;
     }
 
-    #chart-lap-distance tbody tr.dc-table-row:hover {
+    #chart-lap-distance tbody tr.dc-table-row:hover,
+    #chart-activity-time tbody tr.dc-table-row:hover {
         fill-opacity: 0.6;
     }
     
@@ -161,7 +163,14 @@
               <h3 class="panel-title">Activity <small>Time</small></h3>
             </div>
             <div class="panel-body">
-              <div id="chart-activity-time"></div>
+              <table id="chart-activity-time" class="table table-condensed table-hover">
+                <thead>
+                  <tr>
+                    <th>Activity</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+              </table>
             </div>
           </div>
         </div>
@@ -385,6 +394,7 @@ var timeWDDim = facts.dimension(function(d) { return wdf(d.Time); });
 var chartActivity = dc.rowChart("#chart-activity");
 var chartFilename = dc.rowChart("#chart-filename");
 var chartLapDistance = dc.dataTable("#chart-lap-distance");
+var chartActivityTime = dc.dataTable("#chart-activity-time");
 var chartLapTime = dc.pieChart("#chart-lap-time");
 var chartPointsCount = dc.numberDisplay("#chart-stats-points");
 var chartTotalDistance = dc.numberDisplay("#chart-stats-distance");
@@ -695,6 +705,106 @@ chartLapDistance
       });
     
   });
+
+
+
+
+
+
+var activityTimekeyFunc = function(d) { return d.File + d.PointIndex; };
+var activityTimeGroup = filenameDim.group().reduce(
+	function(p,v) {
+	  if (!p.has(keyFunc(v))) {
+	    p.set(keyFunc(v),v);
+	  }
+	  return p;
+    }, function(p,v) {
+	  if (p.has(keyFunc(v))) {
+	    p.remove(keyFunc(v));
+	  }
+      return p;
+    }, function() {
+      return d3.map();
+    });
+
+var chartActivityTimeActiveRows = d3.set();
+
+chartActivityTime
+  .width(200)
+  .height(200)
+  .size(50)
+  .dimension({
+      filter: function(f) {
+        filenameDim.filter(f);
+      },
+      filterExact: function(v) {
+        filenameDim.filterExact(v);
+      },
+      filterFunction: function(f) {
+        filenameDim.filterFunction(f);
+      },
+      filterRange: function(r) {
+        filenameDim.filterRange(r);
+      },
+      bottom: function(sz) {
+        var gdata = activityTimeGroup.all();
+		var arr = [];
+		gdata.forEach(function(actdata) {
+			actdata.value.forEach(function(k,v) {
+				arr.push(v);
+			});
+		});
+        
+        var nested = d3.nest()
+        .key(function(d) { return d.Activity; })
+        .key(function(d) { return d.File })
+        .rollup(function(a) { return d3.sum(a, function(d) { return d.TimePoint; });  })
+        .entries(arr);
+        
+        var values = []
+        nested.forEach(function(activity) {
+          activity.values.forEach(function(file) {
+            values.push({
+              Activity: activity.key,
+              File: file.key,
+              Time: file.values
+            });
+          });
+        });
+        return values;
+      }
+  })
+  .group(function(d) { return d.Activity; })
+  .columns([
+    function(d) { return d.File; },
+    function(d) { return formatSeconds(d.Time/1000,false); }
+  ])
+  .on('renderlet', function(chart) {
+    
+    chart.selectAll('.dc-table-row')
+      .classed('active', function(d) { 
+        return chartActivityTimeActiveRows.has(d.Activity+d.File); })
+      .on('click', function(d) {
+        if (chartActivityTimeActiveRows.has(d.Activity+d.File)) {
+          d3.select(this).classed('active',false);
+          chartActivityTimeActiveRows.remove(d.Activity+d.File);
+        } else {
+          d3.select(this).classed('active',true);
+          chartActivityTimeActiveRows.add(d.Activity+d.File);
+        }
+        
+        dc.events.trigger(function () {
+          chart.filter(d.File);
+          chart.redrawGroup();
+        });
+        
+      });
+    
+  });
+
+
+
+
 
 
 
