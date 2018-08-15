@@ -65,7 +65,27 @@ chartTotalTime
 
 
 
-
+var chartAvgPace = dc.numberDisplay("#chart-total-avgpace");
+chartAvgPace
+  .group(facts.groupAll().reduce
+(function(p,v) {
+      p.count++;
+      p.total+=v.PaceSK;
+      return p;
+    }, function(p,v) {
+      p.count--;
+      p.total-=v.PaceSK;
+      return p;
+    }, function() {
+      return {count:0, total:0};
+    }))
+  .formatNumber(function(d) {
+return formatSeconds(d,false);
+})
+  .valueAccessor(function(d) { 
+if (d.count==0) return 0;
+return d.total/d.count;
+});
 
 
 
