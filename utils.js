@@ -2,11 +2,11 @@ function format_hr(d) {
   return d.toFixed(0);
 }
 
-function formatSeconds(seconds,human = true) {
+function formatSeconds(seconds,human = true,html=false) {
   if (seconds == 0 || seconds == Infinity) {
-    return human ? "0s" : "00:00";
-
+    return human ? (html ? "0<small>s</small>": "0s") : "00:00";
   }
+  
   var sec = 1;
   var sec_min = sec * 60;
   var sec_hour = sec_min * 60;
@@ -22,11 +22,11 @@ function formatSeconds(seconds,human = true) {
   var str = "";
   
   if (human) {
-    str = (weeks ? weeks + "w " : "") +
-         (days ? days + "d " : "") +
-         (hours ? hours + "h " : "") +
-         (mins ? mins + "m " : "") +
-         (secs ? secs + "s " : "");
+    str = (weeks ? weeks + (html ? "<small>w</small>" :"w ") : "") +
+         (days ? days + (html ? "<small>d</small>" :"d ") : "") +
+         (hours ? hours + (html ? "<small>h</small>" :"h ") : "") +
+         (mins ? mins + (html ? "<small>m</small>" :"m ") : "") +
+         (secs ? secs + (html ? "<small>s</small>" :"s ") : "");
   } else {
     str = (weeks ? (weeks < 10 ? "0" + weeks : weeks)  + ":" : "") +
          (days ? (days < 10 ? "0" + days : days) + ":" : "") +
