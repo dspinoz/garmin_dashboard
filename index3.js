@@ -7,6 +7,85 @@ var timeScale = d3.time.second;
 var filenameColors = d3.scale.category10();
 var facts = crossfilter();
 
+
+
+var chartPointsCount = dc.numberDisplay("#chart-total-points");
+
+chartPointsCount
+  .group(facts.groupAll().reduceCount())
+  .formatNumber(d3.round)
+  .valueAccessor(function(d) { return d; });
+
+  
+  
+  
+  
+
+var activityDim = facts.dimension(function(d) { return d.File; });
+var chartTotalDistance = dc.numberDisplay("#chart-total-activities");
+
+
+function group_count(group) {
+  return {
+    all:function () {
+      return [group.all().length];
+    }
+  };
+}
+
+chartTotalDistance
+  .group(group_count(activityDim.group().reduceCount()))
+  .formatNumber(d3.round)
+  .valueAccessor(function(d) { return d; });
+  
+  
+  
+  
+  
+
+var chartTotalDistance = dc.numberDisplay("#chart-total-distance");
+
+chartTotalDistance
+  .group(facts.groupAll().reduceSum(function(d) { return d.DistancePoint; }))
+  .formatNumber(function(d) {
+    return d3.round(d / 1000,2) + "<small>km</small>";
+  })
+  .valueAccessor(function(d) { return d; });
+
+
+
+var chartTotalTime = dc.numberDisplay("#chart-total-time");
+chartTotalTime
+  .group(facts.groupAll().reduceSum(function(d) { return d.TimePoint; }))
+  .formatNumber(function(d) {
+    return formatSeconds(d3.round(d / 1000), true, true);
+  })
+  .valueAccessor(function(d) { return d; });
+
+
+
+
+
+
+
+
+var redraw_count = 0;
+
+function redraw() {
+  if (facts.size() > 0) {
+    if (redraw_count == 0) {
+      dc.renderAll();
+    } else {
+      dc.redrawAll();
+    }
+    //TODO refreshDataTable();
+    redraw_count++;
+  }
+}
+
+redraw();
+
+
 var interval_render_done = true;
 var load_interval = setInterval(load_data, 200);
 var load_count = 5000;
@@ -36,7 +115,7 @@ function load_data() {
   d3.select('.progress-bar').classed('progress-bar-success', true).style('width', ((data_toload_complete/data_toload_total)*100)+'%');
   
   interval_render_done = false; 
-  //TODO redraw();
+  redraw();
 }
 
 d3.csv('/activities.csv', function(activities) {
