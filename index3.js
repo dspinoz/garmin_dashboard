@@ -89,7 +89,37 @@ chartAvgPace.group(group_count_total(facts.groupAll(), function(d) { return d.Pa
     return d.total/d.count;
   });
 
+var chartAvgSpeedMM = dc.numberDisplay("#chart-total-avgspeed-mm");
+chartAvgSpeedMM.group(group_count_total(facts.groupAll(), function(d) { return d.SpeedMM; }))
+  .formatNumber(function(d) {
+    return d3.round(d,1);
+  })
+  .valueAccessor(function(d) { 
+  if (d.count==0) return 0;
+    return d.total/d.count;
+  });
 
+var chartAvgHeartRate = dc.numberDisplay("#chart-total-avgheartrate");
+chartAvgHeartRate
+  .group(group_count_total(facts.groupAll(), function(d) { return d.HeartRate; }))
+  .formatNumber(function(d) {
+    return d3.round(d);
+  })
+  .valueAccessor(function(d) { 
+    if (d.count==0) return 0;
+    return d.total/d.count;
+  });
+
+var chartAvgCadence = dc.numberDisplay("#chart-total-avgcadence");
+chartAvgCadence
+  .group(group_count_total(facts.groupAll(), function(d) { return d.Cadence ? d.Cadence : 0; }))
+  .formatNumber(function(d) {
+    return d3.round(d);
+  })
+  .valueAccessor(function(d) { 
+    if (d.count==0) return 0;
+    return d.total/d.count;
+  });
 
 var redraw_count = 0;
 
