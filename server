@@ -28,6 +28,14 @@ def index():
 def index2():
   return static_file('index2.html', root='.')
 
+@route('/index3.html')
+def index3():
+  return static_file('index3.html', root='.')
+
+@route('/index3.js')
+def index3_js():
+  return static_file('index3.js', root='.')
+
 @route('/tcx_parser.js')
 def tcx_parser():
   return static_file('tcx_parser.js', root='.')
