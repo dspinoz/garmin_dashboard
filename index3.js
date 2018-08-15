@@ -25,7 +25,7 @@ var activityDim = facts.dimension(function(d) { return d.File; });
 var chartTotalDistance = dc.numberDisplay("#chart-total-activities");
 
 
-function group_length(group) {
+function group_get_length(group) {
   return {
     all:function () {
       return [group.all().length];
@@ -33,7 +33,7 @@ function group_length(group) {
   };
 }
 
-function group_count_total(group,fn) {
+function group_reduceCountTotal(group,fn) {
   return group.reduce(function(p,v) {
       p.count++;
       p.total+=fn(v);
@@ -48,7 +48,7 @@ function group_count_total(group,fn) {
 }
 
 chartTotalDistance
-  .group(group_length(activityDim.group().reduceCount()))
+  .group(group_get_length(activityDim.group().reduceCount()))
   .formatNumber(d3.round)
   .valueAccessor(function(d) { return d; });
   
@@ -80,7 +80,7 @@ chartTotalTime
 
 
 var chartAvgPace = dc.numberDisplay("#chart-total-avgpace");
-chartAvgPace.group(group_count_total(facts.groupAll(), function(d) { return d.PaceSK; }))
+chartAvgPace.group(group_reduceCountTotal(facts.groupAll(), function(d) { return d.PaceSK; }))
   .formatNumber(function(d) {
     return formatSeconds(d,false);
   })
@@ -90,7 +90,7 @@ chartAvgPace.group(group_count_total(facts.groupAll(), function(d) { return d.Pa
   });
 
 var chartAvgSpeedMM = dc.numberDisplay("#chart-total-avgspeed-mm");
-chartAvgSpeedMM.group(group_count_total(facts.groupAll(), function(d) { return d.SpeedMM; }))
+chartAvgSpeedMM.group(group_reduceCountTotal(facts.groupAll(), function(d) { return d.SpeedMM; }))
   .formatNumber(function(d) {
     return d3.round(d,1);
   })
@@ -101,7 +101,7 @@ chartAvgSpeedMM.group(group_count_total(facts.groupAll(), function(d) { return d
 
 var chartAvgHeartRate = dc.numberDisplay("#chart-total-avgheartrate");
 chartAvgHeartRate
-  .group(group_count_total(facts.groupAll(), function(d) { return d.HeartRate; }))
+  .group(group_reduceCountTotal(facts.groupAll(), function(d) { return d.HeartRate; }))
   .formatNumber(function(d) {
     return d3.round(d);
   })
@@ -112,7 +112,7 @@ chartAvgHeartRate
 
 var chartAvgCadence = dc.numberDisplay("#chart-total-avgcadence");
 chartAvgCadence
-  .group(group_count_total(facts.groupAll(), function(d) { return d.Cadence ? d.Cadence : 0; }))
+  .group(group_reduceCountTotal(facts.groupAll(), function(d) { return d.Cadence ? d.Cadence : 0; }))
   .formatNumber(function(d) {
     return d3.round(d);
   })
