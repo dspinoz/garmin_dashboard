@@ -5,7 +5,7 @@ var hrf = d3.time.format('%H');
 var wdf = d3.time.format('%w.%A');
 var timeScale = d3.time.second;
 var filenameColors = d3.scale.category10();
-
+var facts = crossfilter();
 
 var interval_render_done = true;
 var load_interval = setInterval(load_data, 200);
@@ -16,7 +16,6 @@ var data_toload_total = 0;
 var data_toload_complete = 0;
 
 function load_data() {
-  //TODO if (facts.size() > 0 && !interval_render_done) { return; }
   
   if (load_complete && !data_toload.length)
   {
@@ -33,11 +32,9 @@ function load_data() {
   
   data_toload_complete += toadd.length;
   
-  setTimeout(function() {
-    d3.select('.progress-bar').classed('progress-bar-success', true).style('width', ((data_toload_complete/data_toload_total)*100)+'%');
-  }, 0);
-          
-  //TODO facts.add(toadd);
+  facts.add(toadd);
+  d3.select('.progress-bar').classed('progress-bar-success', true).style('width', ((data_toload_complete/data_toload_total)*100)+'%');
+  
   interval_render_done = false; 
   //TODO redraw();
 }
@@ -195,6 +192,5 @@ d3.csv('/activities.csv', function(activities) {
     }
     
     load_complete = true;
-    
   });
 });
