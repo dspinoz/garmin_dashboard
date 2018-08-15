@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="/favicon.ico">
+
+    <title>Garmin Dashboard</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/bower_components/bootstrap/dist/css/bootstrap.css" rel="stylesheet">
+
+    <!-- Custom styles -->
+    <style>
+    body {
+      padding-top: 60px;
+    }
+
+    @media all and (max-width: 1439px) {
+      body { margin: 0px auto; }
+      .axis { position: static; }
+      .axis.top, .axis.bottom { padding: 0; }
+    }
+	
+	.h1.overall-stats,
+	.h2.overall-stats,
+	.h3.overall-stats {
+	  margin-top: unset;
+	  margin-bottom: unset;
+	}
+    
+    </style>
+    
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <script src="/bower_components/jquery/dist/jquery.js"></script>
+    <script src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Garmin Dashboard</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <div class="progress" style="margin-top:15px;">
+            <div class="progress-bar progress-bar-success" style="width: 0%">
+              <span class="sr-only">Complete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container" role="main">
+	
+      <div class="row">
+        <div class="col-sm-2">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Activities</h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id="">3 <small><span title="data points">5650</span></small></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-2">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Total Distance</h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id="">34<small>km</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-2">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Avg Pace</h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id="">6:25<small>m/km</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-2">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Avg Speed</h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id=""><span title="13 km/h">133<small>m/min</small></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-2">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Avg Heart Rate</h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id="">153<small>bpm</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-2">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Avg Cadence</h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id="">163<small>spm</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+	  
+      <div class="row">
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Elapsed Time</h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id="">1<small>h</small> 50<small>m</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Total Stationary Time <small>&lt;1km/h</small></h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id="">2<small>m</small> 30<small>s</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Total Walking Time <small>&lt;6km/h</small></h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id="">47<small>m</small> 30<small>s</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Total Running Time <small>&gt;8km/h</small></h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id="">1<small>h</small> 00<small>m</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+	  
+      <div class="row">
+        <div class="col-sm-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Activity <small>Count p. File</small></h3>
+            </div>
+            <div class="panel-body">
+			  <table class="table table-hover table-condensed" id="">
+				<thead></thead>
+				<tbody>
+					<tr><td>Aerobic HR</td><td><span class="badge">5</span></td></tr>
+					<tr><td>Strength</td><td><span class="badge">3</span></td></tr>
+					<tr><td>Drills</td><td><span class="badge">2</span></td></tr>
+				</tbody>
+			  </table>
+            </div>
+          </div>
+        </div>
+		
+        <div class="col-sm-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Lap Type <small>Count p. File</small></h3>
+            </div>
+            <div class="panel-body">
+			  <table class="table table-hover table-condensed" id="">
+				<thead></thead>
+				<tbody>
+					<tr><td>Warm Up</td><td><span class="badge">3</span></td></tr>
+					<tr><td>Workout</td><td><span class="badge">3</span></td></tr>
+					<tr><td>Cool Down</td><td><span class="badge">3</span></td></tr>
+				</tbody>
+			  </table>
+            </div>
+          </div>
+        </div>
+		
+        <div class="col-sm-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Device <small>Count p. File</small></h3>
+            </div>
+            <div class="panel-body">
+			  <table class="table table-hover table-condensed" id="">
+				<thead></thead>
+				<tbody>
+					<tr><td>610</td><td><span class="badge">3</span></td></tr>
+					<tr><td>iPhone</td><td><span class="badge">3</span></td></tr>
+					<tr><td>630</td><td><span class="badge">5</span></td></tr>
+				</tbody>
+			  </table>
+            </div>
+          </div>
+        </div>
+      </div>
+	  
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Activity Summary</h3>
+            </div>
+            <div class="panel-body">
+			  <table class="table table-bordered table-hover" id="">
+				<thead>
+				  <tr>
+					<th>Activity</th>
+					<th>Walking<br/><small>Time/Distance</small></th>
+					<th>Time<br/><small>Running</small></th>
+					<th>Distance<br/><small>km</small></th>
+					<th>Speed<br/><small>min/km (km/h)</small></th>
+					<th>Speed<br/><small>m/min</small></th>
+					<th>Heart Rate<br/><small>bpm</small></th>
+					<th>Cadence<br/><small>spm</small></th>
+				  </tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>1234.tcx</td>
+						<td>00:30 <small>0.3km</small></td>
+						<td><span title="Running">31:30</span></td>
+						<td><span title="Running">5.5</span></td>
+						<td><span title="Running">06:30 (11.3)</span></td>
+						<td><span title="Running">145</span></td>
+						<td><span title="Running">175</span></td>
+						<td><span title="Running">163</span></td>
+					</tr>
+					<tr>
+						<td>6789.tcx</td>
+						<td>00:30 <small>0.3km</small></td>
+						<td><span title="Running">31:30</span></td>
+						<td><span title="Running">5.5</span></td>
+						<td><span title="Running">06:30 (11.3)</span></td>
+						<td><span title="Running">145</span></td>
+						<td><span title="Running">175</span></td>
+						<td><span title="Running">163</span></td>
+					</tr>
+					<tr>
+						<td>4567.tcx</td>
+						<td>00:30 <small>0.3km</small></td>
+						<td><span title="Running">31:30</span></td>
+						<td><span title="Running">5.5</span></td>
+						<td><span title="Running">06:30 (11.3)</span></td>
+						<td><span title="Running">145</span></td>
+						<td><span title="Running">175</span></td>
+						<td><span title="Running">163</span></td>
+					</tr>
+				</tbody>
+			  </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+		
+      <div class="row">
+        <div class="col-sm-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Time Quantiles <small>Count p. File</small></h3>
+            </div>
+            <div class="panel-body">
+			  <table class="table table-hover table-condensed" id="">
+				<thead></thead>
+				<tbody>
+					<tr><td width='35'><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(37,52,48);"></rect></svg></td><td>&lt;10m</td><td><span class="badge">0</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(34,94,168);"></rect></svg></td><td>10-20m</td><td><span class="badge">1</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(29,145,192);"></rect></svg></td><td>20-30m</td><td><span class="badge">1</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(65,182,196);"></rect></svg></td><td>30-40m</td><td><span class="badge">5</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(127,205,187);"></rect></svg></td><td>50-60m</td><td><span class="badge">2</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(199,233,180);"></rect></svg></td><td>&gt;60</td><td><span class="badge">0</span></td></tr>
+				</tbody>
+			  </table>
+            </div>
+          </div>
+        </div>
+		
+        <div class="col-sm-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Speed Quantiles <small>m/min, Count p. File</small></h3>
+            </div>
+            <div class="panel-body">
+			  <table class="table table-hover table-condensed" id="">
+				<thead></thead>
+				<tbody>
+					<tr><td width='35'><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(37,52,48);"></rect></svg></td><td>&lt;100</td><td><span class="badge">0</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(34,94,168);"></rect></svg></td><td>100-110</td><td><span class="badge">1</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(29,145,192);"></rect></svg></td><td>110-120</td><td><span class="badge">1</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(65,182,196);"></rect></svg></td><td>120-130</td><td><span class="badge">5</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(127,205,187);"></rect></svg></td><td>130-140</td><td><span class="badge">2</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(199,233,180);"></rect></svg></td><td>&gt;140</td><td><span class="badge">0</span></td></tr>
+				</tbody>
+			  </table>
+            </div>
+          </div>
+        </div>
+		
+        <div class="col-sm-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">HR Quantiles <small>bpm, Count p. File</small></h3>
+            </div>
+            <div class="panel-body">
+			  <table class="table table-hover table-condensed" id="">
+				<thead></thead>
+				<tbody>
+					<tr><td width='35'><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(37,52,48);"></rect></svg></td><td>&lt;Z1</td><td><span class="badge">0</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(34,94,168);"></rect></svg></td><td>Z1</td><td><span class="badge">1</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(29,145,192);"></rect></svg></td><td>Z3</td><td><span class="badge">1</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(65,182,196);"></rect></svg></td><td>Z3</td><td><span class="badge">5</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(127,205,187);"></rect></svg></td><td>Z4</td><td><span class="badge">2</span></td></tr>
+					<tr><td><svg width=30 height=30><rect width="30" height="30" style="fill: rgb(199,233,180);"></rect></svg></td><td>Z5</td><td><span class="badge">0</span></td></tr>
+				</tbody>
+			  </table>
+            </div>
+          </div>
+        </div>
+      </div>
+	  
+      <div class="row">
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Year to Date</h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id=""><span class="badge" title="activities">25</span><br/>123<small>km</small><br/>30<small>h</small> 45<small>m</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Last Month</h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id=""><span class="badge" title="activities">10</span><br/>30<small>km</small><br/>5<small>h</small> 30<small>m</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Last Week</h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id=""><span class="badge" title="activities">3</span><br/>10<small>km</small><br/>1<small>h</small> 30<small>m</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">This Week</h3>
+            </div>
+            <div class="panel-body text-center">
+              <div class="h1 overall-stats" id=""><span class="badge" title="activities">1</span><br/>5<small>km</small><br/>30<small>m</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+	  
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Day <small>Count p. Activity</small></h3>
+            </div>
+            <div class="panel-body">
+              <div id=""></div>
+            </div>
+          </div>
+        </div>
+      </div>
+	  
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Month <small>Count p. Activity</small></h3>
+            </div>
+            <div class="panel-body">
+              <div id=""></div>
+            </div>
+          </div>
+        </div>
+	  </div>
+	  
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Year <small>Count p. Activity</small></h3>
+            </div>
+            <div class="panel-body">
+              <div id=""></div>
+            </div>
+          </div>
+        </div>
+	  </div>
+	  
+    </div><!-- /.container -->
+  </body>
+</html>
