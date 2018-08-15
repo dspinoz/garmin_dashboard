@@ -33,6 +33,20 @@ function group_count(group) {
   };
 }
 
+function group_count_total(group,fn) {
+  return group.reduce(function(p,v) {
+      p.count++;
+      p.total+=fn(v);
+      return p;
+    }, function(p,v) {
+      p.count--;
+      p.total-=fn(v);
+      return p;
+    }, function() {
+      return {count:0, total:0};
+    });
+}
+
 chartTotalDistance
   .group(group_count(activityDim.group().reduceCount()))
   .formatNumber(d3.round)
@@ -66,26 +80,14 @@ chartTotalTime
 
 
 var chartAvgPace = dc.numberDisplay("#chart-total-avgpace");
-chartAvgPace
-  .group(facts.groupAll().reduce
-(function(p,v) {
-      p.count++;
-      p.total+=v.PaceSK;
-      return p;
-    }, function(p,v) {
-      p.count--;
-      p.total-=v.PaceSK;
-      return p;
-    }, function() {
-      return {count:0, total:0};
-    }))
+chartAvgPace.group(group_count_total(facts.groupAll(), function(d) { return d.PaceSK; }))
   .formatNumber(function(d) {
-return formatSeconds(d,false);
-})
+    return formatSeconds(d,false);
+  })
   .valueAccessor(function(d) { 
-if (d.count==0) return 0;
-return d.total/d.count;
-});
+  if (d.count==0) return 0;
+    return d.total/d.count;
+  });
 
 
 
