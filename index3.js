@@ -25,7 +25,7 @@ var activityDim = facts.dimension(function(d) { return d.File; });
 var chartTotalDistance = dc.numberDisplay("#chart-total-activities");
 
 
-function group_count(group) {
+function group_length(group) {
   return {
     all:function () {
       return [group.all().length];
@@ -48,7 +48,7 @@ function group_count_total(group,fn) {
 }
 
 chartTotalDistance
-  .group(group_count(activityDim.group().reduceCount()))
+  .group(group_length(activityDim.group().reduceCount()))
   .formatNumber(d3.round)
   .valueAccessor(function(d) { return d; });
   
