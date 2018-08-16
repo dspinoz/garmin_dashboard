@@ -47,6 +47,23 @@ function group_reduceCountTotal(group,fn) {
     });
 }
 
+function group_reduceSum(group,accessor = function(d) { return d;},filter=undefined) {
+  if (filter == undefined) {
+    filter = function(d) { return true; }
+  }
+  return group.reduce(function(p,v) {
+    if (!filter(v)) return p;
+      p.total+=accessor(v);
+      return p;
+    }, function(p,v) {
+    if (!filter(v)) return p;
+      p.total-=accessor(v);
+      return p;
+    }, function() {
+      return {total:0};
+    });
+}
+
 chartTotalDistance
   .group(group_get_length(activityDim.group().reduceCount()))
   .formatNumber(d3.round)
@@ -76,6 +93,16 @@ chartTotalTime
   })
   .valueAccessor(function(d) { return d; });
 
+
+var chartTotalStationaryTime = dc.numberDisplay("#chart-total-stationarytime");
+chartTotalStationaryTime
+  .group(group_reduceSum(facts.groupAll(), function(d){return d.TimePoint; }, function(d){return d.LapType == "Stationary";}))
+  .formatNumber(function(d) {
+    return formatSeconds(d3.round(d / 1000), true, true);
+  })
+  .valueAccessor(function(d) { return d.total; });
+  
+  
 
 
 
