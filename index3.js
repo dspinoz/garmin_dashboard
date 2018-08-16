@@ -101,6 +101,24 @@ chartTotalStationaryTime
     return formatSeconds(d3.round(d / 1000), true, true);
   })
   .valueAccessor(function(d) { return d.total; });
+
+
+var chartTotalWalkingTime = dc.numberDisplay("#chart-total-walkingtime");
+chartTotalWalkingTime
+  .group(group_reduceSum(facts.groupAll(), function(d){return d.TimePoint; }, function(d){return d.LapType != "Stationary" && d.SpeedKH < 6;}))
+  .formatNumber(function(d) {
+    return formatSeconds(d3.round(d / 1000), true, true);
+  })
+  .valueAccessor(function(d) { return d.total; });
+
+
+var chartTotalRunningTime = dc.numberDisplay("#chart-total-runningtime");
+chartTotalRunningTime
+  .group(group_reduceSum(facts.groupAll(), function(d){return d.TimePoint; }, function(d){return d.LapType != "Stationary" && d.SpeedKH >= 6;}))
+  .formatNumber(function(d) {
+    return formatSeconds(d3.round(d / 1000), true, true);
+  })
+  .valueAccessor(function(d) { return d.total; });
   
   
 
