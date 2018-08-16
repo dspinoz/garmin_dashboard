@@ -23,7 +23,7 @@ chartPointsCount
 var activityDim = facts.dimension(function(d) { return d.Activity; });
 var fileDim = facts.dimension(function(d) { return d.File; });
 var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
-
+var perMinuteDim = facts.dimension(function(d) { return d3.time.minute(d.Time); });
 
 
 
@@ -179,7 +179,7 @@ var chartAvgCadence = dc.numberDisplay("#chart-total-avgcadence");
 chartAvgCadence
   .group(group_reduceCountTotal(facts.groupAll(), function(d) { return d.Cadence ? d.Cadence : 0; }))
   .formatNumber(function(d) {
-    return d3.round(d);
+    return d3.round(2*d);
   })
   .valueAccessor(function(d) { 
     if (d.count==0) return 0;
@@ -358,6 +358,7 @@ d3.csv('/activities.csv', function(activities) {
         d.TimeInterval = dateToInterval(d, 'Time', timeScale, 1);
         d.HeartRate = +d['Heart Rate'];
         delete d['Heart Rate'];
+        d.Cadence = +d.Cadence;
         
         if (d.HeartRate > 200) {
           console.log('**MAX HR',d.HeartRate,d);
