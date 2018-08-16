@@ -30,7 +30,7 @@ var timeTypeDim = facts.dimension(function(d) {
   return "Unknown";
 });
 var perMinuteDim = facts.dimension(function(d) { return d3.time.minute(d.Time); });
-
+var perYearDim = facts.dimension(function(d) { return d3.time.year(d.Time); });
 
 
 function group_get_length(group) {
@@ -82,6 +82,29 @@ function group_reduceMap(group,keyFunc) {
     }, function(p,v) {
 	  if (p.has(keyFunc(v))) {
 	    p.remove(keyFunc(v));
+	  }
+      return p;
+    }, function() {
+      return d3.map();
+    });
+}
+
+function group_reduceMappedValue(group,keyFunc,valueFunc) {
+  return group.reduce(
+	function(p,v) {
+	  if (!p.has(keyFunc(v))) {
+      p.set(keyFunc(v),d3.map());
+	  }
+    p.get(keyFunc(v)).set(valueFunc(v),v);
+	  return p;
+    }, function(p,v) {
+	  if (p.has(keyFunc(v))) {
+      if (p.get(keyFunc(v)).has(valueFunc(v))) {
+        p.get(keyFunc(v)).remove(valueFunc(v));
+      }
+      if (p.get(keyFunc(v)).size() == 0) {
+        p.remove(keyFunc(v));
+      }
 	  }
       return p;
     }, function() {
@@ -293,6 +316,35 @@ function timePanel_register(type,disable=[]) {
 timePanel_register('running',['walking','stationary']);
 timePanel_register('walking', ['running','stationary']);
 timePanel_register('stationary',['running','walking']);
+
+
+
+//<span class="badge" title="activities">25</span><br/>123<small>km</small><br/>30<small>h</small> 45<small>m</small>
+
+var chartSummaryYear = dc.numberDisplay("#chart-summary-year");
+
+chartSummaryYear
+  .group(group_reduceMap(perYearDim.group(), function(d) { return d.File+d.PointIndex; }))
+  .formatNumber(function(d){
+    console.log(d);
+    return d3.round(d.distance/1000,2)+"<small>km</small>";
+  })
+  .valueAccessor(function(d) { 
+    console.log(d);
+    
+    var files = d3.set();
+    var totalTime = 0;
+    var totalDistance = 0;
+    d.value.entries().forEach(function(e) {
+      //console.log(e);
+      files.add(e.value.File);
+      totalDistance += e.value.DistancePoint;
+      totalTime += e.value.TimePoint;
+    });
+    
+    console.log( {distance:totalDistance,time:totalTime,files:files.size()} );
+  });
+
 
 
 
