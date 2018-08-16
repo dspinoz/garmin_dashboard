@@ -20,9 +20,10 @@ chartPointsCount
   
   
   
+var activityDim = facts.dimension(function(d) { return d.Activity; });
+var fileDim = facts.dimension(function(d) { return d.File; });
 
-var activityDim = facts.dimension(function(d) { return d.File; });
-var chartTotalDistance = dc.numberDisplay("#chart-total-activities");
+
 
 
 function group_get_length(group) {
@@ -64,8 +65,26 @@ function group_reduceSum(group,accessor = function(d) { return d;},filter=undefi
     });
 }
 
+function group_reduceMap(group,keyFunc) {
+  return group.reduce(
+	function(p,v) {
+	  if (!p.has(keyFunc(v))) {
+	    p.set(keyFunc(v),v);
+	  }
+	  return p;
+    }, function(p,v) {
+	  if (p.has(keyFunc(v))) {
+	    p.remove(keyFunc(v));
+	  }
+      return p;
+    }, function() {
+      return d3.map();
+    });
+}
+
+var chartTotalDistance = dc.numberDisplay("#chart-total-activities");
 chartTotalDistance
-  .group(group_get_length(activityDim.group().reduceCount()))
+  .group(group_get_length(fileDim.group().reduceCount()))
   .formatNumber(d3.round)
   .valueAccessor(function(d) { return d; });
   
@@ -165,6 +184,45 @@ chartAvgCadence
     if (d.count==0) return 0;
     return d.total/d.count;
   });
+
+
+var chartActivityTable = dc.dataTable("#chart-activity-table");
+
+//TODO provide custom reduce to check number of file's
+var activityCountGroup = activityDim.group().reduceCount();
+
+chartActivityTable
+  .dimension({
+      filter: function(f) {
+        activityDim.filter(f);
+      },
+      filterExact: function(v) {
+        activityDim.filterExact(v);
+      },
+      filterFunction: function(f) {
+        activityDim.filterFunction(f);
+      },
+      filterRange: function(r) {
+        activityDim.filterRange(r);
+      },
+      bottom: function(sz) {
+        var gdata = activityCountGroup.all();
+        return gdata;
+      }
+  })
+  .group(function(d) { return "Activities"; })
+  .columns([
+    function(d) { return d.key; },
+    function(d) { return "<span class=\"badge\">"+d.value+"</span>"; }
+  ])
+
+
+
+
+
+
+
+
 
 var redraw_count = 0;
 
