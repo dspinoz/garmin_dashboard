@@ -23,6 +23,12 @@ chartPointsCount
 var activityDim = facts.dimension(function(d) { return d.Activity; });
 var fileDim = facts.dimension(function(d) { return d.File; });
 var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
+var timeTypeDim = facts.dimension(function(d) {
+  if (d.LapType == "Stationary") return "Stationary";
+  if (d.LapType != "Stationary" && d.SpeedKH < 6) return "Walking";
+  if (d.LapType != "Stationary" && d.SpeedKH >= 6) return "Running";
+  return "Unknown";
+});
 var perMinuteDim = facts.dimension(function(d) { return d3.time.minute(d.Time); });
 
 
@@ -253,7 +259,25 @@ chartLapTypeTable
   });
 
 
-
+d3.select('#panel-running-time')
+  .style('cursor','pointer')
+  .on('click', function() {
+    if (d3.select(this).classed('panel-warning')) {
+      d3.select(this).classed('panel-success',true);
+      d3.select(this).classed('panel-warning',false);
+    } else {
+      d3.select(this).classed('panel-success',false);
+      d3.select(this).classed('panel-warning',true);
+    }
+    dc.events.trigger(function () {
+      if (timeTypeDim.hasCurrentFilter()) {
+        timeTypeDim.filter(null);
+      } else {
+        timeTypeDim.filter("Running");
+      }
+      dc.redrawAll();
+    });
+  });
 
 
 
