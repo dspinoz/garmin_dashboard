@@ -22,6 +22,7 @@ chartPointsCount
   
 var activityDim = facts.dimension(function(d) { return d.Activity; });
 var fileDim = facts.dimension(function(d) { return d.File; });
+var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
 
 
 
@@ -188,7 +189,6 @@ chartAvgCadence
 
 var chartActivityTable = dc.dataTable("#chart-activity-table");
 
-//TODO provide custom reduce to check number of file's
 var activityCountGroup = group_reduceMap(activityDim.group(), function(d){return d.File; });
 
 chartActivityTable
@@ -213,14 +213,44 @@ chartActivityTable
   .group(function(d) { return "Activities"; })
   .columns([
     function(d) { return d.key; },
-    function(d) { console.log(d);return "<span class=\"badge\">"+d.value.size()+"</span>"; }
+    function(d) { return "<span class=\"badge\">"+d.value.size()+"</span>"; }
   ])
   .on('renderlet', function(chart) {
     chart.selectAll('tr.dc-table-group').style('display','none');
   });
 
 
+var chartLapTypeTable = dc.dataTable("#chart-laptype-table");
 
+var lapTypeCountGroup = group_reduceMap(lapTypeDim.group(), function(d){return d.File; });
+
+chartLapTypeTable
+  .dimension({
+      filter: function(f) {
+        lapTypeDim.filter(f);
+      },
+      filterExact: function(v) {
+        lapTypeDim.filterExact(v);
+      },
+      filterFunction: function(f) {
+        lapTypeDim.filterFunction(f);
+      },
+      filterRange: function(r) {
+        lapTypeDim.filterRange(r);
+      },
+      bottom: function(sz) {
+        var gdata = lapTypeCountGroup.all();
+        return gdata;
+      }
+  })
+  .group(function(d) { return "Lap Type"; })
+  .columns([
+    function(d) { return d.key; },
+    function(d) { return "<span class=\"badge\">"+d.value.size()+"</span>"; }
+  ])
+  .on('renderlet', function(chart) {
+    chart.selectAll('tr.dc-table-group').style('display','none');
+  });
 
 
 
