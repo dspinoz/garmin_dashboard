@@ -189,7 +189,7 @@ chartAvgCadence
 var chartActivityTable = dc.dataTable("#chart-activity-table");
 
 //TODO provide custom reduce to check number of file's
-var activityCountGroup = activityDim.group().reduceCount();
+var activityCountGroup = group_reduceMap(activityDim.group(), function(d){return d.File; });
 
 chartActivityTable
   .dimension({
@@ -213,8 +213,11 @@ chartActivityTable
   .group(function(d) { return "Activities"; })
   .columns([
     function(d) { return d.key; },
-    function(d) { return "<span class=\"badge\">"+d.value+"</span>"; }
+    function(d) { console.log(d);return "<span class=\"badge\">"+d.value.size()+"</span>"; }
   ])
+  .on('renderlet', function(chart) {
+    chart.selectAll('tr.dc-table-group').style('display','none');
+  });
 
 
 
