@@ -24,9 +24,9 @@ var activityDim = facts.dimension(function(d) { return d.Activity; });
 var fileDim = facts.dimension(function(d) { return d.File; });
 var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
 var timeTypeDim = facts.dimension(function(d) {
-  if (d.LapType == "Stationary") return "Stationary";
-  if (d.LapType != "Stationary" && d.SpeedKH < 6) return "Walking";
-  if (d.LapType != "Stationary" && d.SpeedKH >= 6) return "Running";
+  if (d.LapType == "Stationary") return "stationary";
+  if (d.LapType != "Stationary" && d.SpeedKH < 6) return "walking";
+  if (d.LapType != "Stationary" && d.SpeedKH >= 6) return "running";
   return "Unknown";
 });
 var perMinuteDim = facts.dimension(function(d) { return d3.time.minute(d.Time); });
@@ -258,26 +258,41 @@ chartLapTypeTable
     chart.selectAll('tr.dc-table-group').style('display','none');
   });
 
-
-d3.select('#panel-running-time')
-  .style('cursor','pointer')
-  .on('click', function() {
-    if (d3.select(this).classed('panel-warning')) {
-      d3.select(this).classed('panel-success',true);
-      d3.select(this).classed('panel-warning',false);
-    } else {
-      d3.select(this).classed('panel-success',false);
-      d3.select(this).classed('panel-warning',true);
-    }
-    dc.events.trigger(function () {
-      if (timeTypeDim.hasCurrentFilter()) {
-        timeTypeDim.filter(null);
-      } else {
-        timeTypeDim.filter("Running");
-      }
-      dc.redrawAll();
+function timePanel_register(type,disable=[]) {
+  d3.select('#panel-'+type+'-time')
+    .style('cursor','pointer')
+    .on('click', function() {
+      
+      dc.events.trigger(function () {
+        if (timeTypeDim.hasCurrentFilter()) {
+          timeTypeDim.filter(null);
+          d3.select('#panel-'+type+'-time').classed('panel-default',false);
+          d3.select('#panel-'+type+'-time').classed('panel-warning',true);
+          d3.select('#panel-'+type+'-time').classed('panel-success',false);
+          disable.forEach(function(d) {
+            d3.select('#panel-'+d+'-time').classed('panel-default',false);
+            d3.select('#panel-'+d+'-time').classed('panel-warning',true);
+            d3.select('#panel-'+d+'-time').classed('panel-success',false);
+          });
+        } else {
+          timeTypeDim.filter(type);
+          d3.select('#panel-'+type+'-time').classed('panel-default',false);
+          d3.select('#panel-'+type+'-time').classed('panel-warning',false);
+          d3.select('#panel-'+type+'-time').classed('panel-success',true);
+          disable.forEach(function(d) {
+            d3.select('#panel-'+d+'-time').classed('panel-default',true);
+            d3.select('#panel-'+d+'-time').classed('panel-warning',false);
+            d3.select('#panel-'+d+'-time').classed('panel-success',false);
+          });
+        }
+        dc.redrawAll();
+      });
     });
-  });
+}
+
+timePanel_register('running',['walking','stationary']);
+timePanel_register('walking', ['running','stationary']);
+timePanel_register('stationary',['running','walking']);
 
 
 
