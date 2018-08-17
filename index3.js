@@ -396,28 +396,39 @@ timePanel_register('stationary',['running','walking']);
 
 //<span class="badge" title="activities">25</span><br/>123<small>km</small><br/>30<small>h</small> 45<small>m</small>
 
-var chartSummaryYear = dc.numberDisplay("#chart-summary-year");
-
-chartSummaryYear
-  .group(group_reduceMap(perYearDim.group(), function(d) { return d.File+d.PointIndex; }))
-  .formatNumber(function(d){
-    console.log(d);
-    return d3.round(d.distance/1000,2)+"<small>km</small>";
-  })
-  .valueAccessor(function(d) { 
-    console.log(d);
+function summaryPanel_calculate(d) {
+    if (d == null) return {distance:0,time:0,files:0};
     
     var files = d3.set();
     var totalTime = 0;
     var totalDistance = 0;
     d.value.entries().forEach(function(e) {
-      //console.log(e);
       files.add(e.value.File);
       totalDistance += e.value.DistancePoint;
       totalTime += e.value.TimePoint;
     });
     
-    console.log( {distance:totalDistance,time:totalTime,files:files.size()} );
+    return {distance:totalDistance,time:totalTime,files:files.size()};
+}
+
+var chartSummaryYear = dc.numberDisplay("#chart-summary-year");
+var yearSummaryGroup = group_reduceMap(perYearDim.group(), function(d) { return d.File+d.PointIndex; });
+
+chartSummaryYear
+  .group({
+	  value: function() {
+		  var now = d3.time.year(new Date());
+		  var ret = yearSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
+		  return ret.length ? ret[0] : null;
+	  }
+  })
+  .formatNumber(function(d){
+    return d3.round(d/1000,2)+"<small>km</small>";
+  })
+  .valueAccessor(function(d) {
+	var ret = summaryPanel_calculate(d);
+	// numberDisplay only allows a single value to be returned
+	return ret.distance;
   });
 
 
