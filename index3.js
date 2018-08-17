@@ -403,6 +403,65 @@ chartDeviceTable
   
   
 
+
+
+
+
+
+
+var chartActivitySummaryTable = dc.dataTable("#chart-activity-summary-table");
+
+var activitySummaryGroup = group_reduceMap(fileDim.group(), function(d) { return d.PointIndex; });
+
+chartActivitySummaryTable
+  .dimension({
+      filter: function(f) {
+        fileDim.filter(f);
+      },
+      filterExact: function(v) {
+        fileDim.filterExact(v);
+      },
+      filterFunction: function(f) {
+        fileDim.filterFunction(f);
+      },
+      filterRange: function(r) {
+        fileDim.filterRange(r);
+      },
+      bottom: function(sz) {
+        var gdata = activitySummaryGroup.all();
+        return gdata;
+      }
+  })
+  .group(function(d) { return "Activities"; })
+  .columns([
+    function(d) { return d.key+' '+ "<small>"+d.value.size()+"</small>"; },
+    function(d) { return formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH < 6 ? e.value.TimePoint : 0;})/1000,false); },
+    function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH < 6 ? e.value.DistancePoint : 0;})/1000,2); },
+  
+    function(d) { return formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH >= 6 ? e.value.TimePoint : 0;})/1000,false); },
+    function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH >= 6 ? e.value.DistancePoint : 0;})/1000,2); },
+
+    function(d) { return formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.PaceSK;})/d.value.size(),false); },
+    function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.SpeedKH;})/d.value.size(),1); },
+    function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.SpeedMM})/d.value.size(),1); },
+
+    function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.HeartRate})/d.value.size(),1); },
+    function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.Cadence})/d.value.size(),1)*2; },
+
+  ])
+  .on('renderlet', function(chart) {
+    chart.selectAll('tr.dc-table-group').style('display','none');
+  });
+
+
+
+
+
+
+
+
+
+
 function timePanel_register(type,disable=[]) {
   d3.select('#panel-'+type+'-time')
     .style('cursor','pointer')
