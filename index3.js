@@ -30,7 +30,6 @@ var timeTypeDim = facts.dimension(function(d) {
   return "Unknown";
 });
 var perMinuteDim = facts.dimension(function(d) { return d3.time.minute(d.Time); });
-var perYearDim = facts.dimension(function(d) { return d3.time.year(d.Time); });
 
 
 function group_get_length(group) {
@@ -410,14 +409,18 @@ function summaryPanel_calculate(d) {
     return {distance:totalDistance,time:totalTime,files:files.size()};
 }
 
-var chartSummaryYearFiles = dc.numberDisplay("#chart-summary-year-activities");
+function summaryPanel_create(name,timefn,accessfn) {
+
+var perYearDim = facts.dimension(function(d) { return timefn(d.Time); });
+var chartSummaryYearFiles = dc.numberDisplay("#chart-summary-"+name+"-activities");
 var yearFilesSummaryGroup = group_reduceMap(perYearDim.group(), function(d) { return d.File+d.PointIndex; });
 
 chartSummaryYearFiles
   .group({
 	  value: function() {
-		  var now = d3.time.year(new Date());
-		  var ret = yearFilesSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
+		  if (accessfn) return accessfn(yearTimeSummaryGroup.all());
+		  var now = timefn(new Date());
+		  var ret = yearTimeSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
 		  return ret.length ? ret[0] : null;
 	  }
   })
@@ -430,14 +433,15 @@ chartSummaryYearFiles
 	return ret.files;
   });
   
-var chartSummaryYearDistance = dc.numberDisplay("#chart-summary-year-distance");
+var chartSummaryYearDistance = dc.numberDisplay("#chart-summary-"+name+"-distance");
 var yearDistanceSummaryGroup = group_reduceMap(perYearDim.group(), function(d) { return d.File+d.PointIndex; });
 
 chartSummaryYearDistance
   .group({
 	  value: function() {
-		  var now = d3.time.year(new Date());
-		  var ret = yearDistanceSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
+		  if (accessfn) return accessfn(yearTimeSummaryGroup.all());
+		  var now = timefn(new Date());
+		  var ret = yearTimeSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
 		  return ret.length ? ret[0] : null;
 	  }
   })
@@ -450,13 +454,14 @@ chartSummaryYearDistance
 	return ret.distance;
   });
 
-var chartSummaryYearTime = dc.numberDisplay("#chart-summary-year-time");
+var chartSummaryYearTime = dc.numberDisplay("#chart-summary-"+name+"-time");
 var yearTimeSummaryGroup = group_reduceMap(perYearDim.group(), function(d) { return d.File+d.PointIndex; });
 
 chartSummaryYearTime
   .group({
 	  value: function() {
-		  var now = d3.time.year(new Date());
+		  if (accessfn) return accessfn(yearTimeSummaryGroup.all());
+		  var now = timefn(new Date());
 		  var ret = yearTimeSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
 		  return ret.length ? ret[0] : null;
 	  }
@@ -469,7 +474,12 @@ chartSummaryYearTime
 	// numberDisplay only allows a single value to be returned
 	return ret.time;
   });
+}
 
+summaryPanel_create('year',d3.time.year);
+summaryPanel_create('month',d3.time.month);
+summaryPanel_create('week',d3.time.week);
+summaryPanel_create('day',d3.time.day);
 
 
 
