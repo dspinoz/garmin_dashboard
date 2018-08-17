@@ -394,7 +394,6 @@ timePanel_register('stationary',['running','walking']);
 
 
 
-//<span class="badge" title="activities">25</span><br/>123<small>km</small><br/>30<small>h</small> 45<small>m</small>
 
 function summaryPanel_calculate(d) {
     if (d == null) return {distance:0,time:0,files:0};
@@ -411,14 +410,34 @@ function summaryPanel_calculate(d) {
     return {distance:totalDistance,time:totalTime,files:files.size()};
 }
 
-var chartSummaryYear = dc.numberDisplay("#chart-summary-year");
-var yearSummaryGroup = group_reduceMap(perYearDim.group(), function(d) { return d.File+d.PointIndex; });
+var chartSummaryYearFiles = dc.numberDisplay("#chart-summary-year-activities");
+var yearFilesSummaryGroup = group_reduceMap(perYearDim.group(), function(d) { return d.File+d.PointIndex; });
 
-chartSummaryYear
+chartSummaryYearFiles
   .group({
 	  value: function() {
 		  var now = d3.time.year(new Date());
-		  var ret = yearSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
+		  var ret = yearFilesSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
+		  return ret.length ? ret[0] : null;
+	  }
+  })
+  .formatNumber(function(d){
+    return "<span class=\"badge\">"+d3.round(d)+"<span>";
+  })
+  .valueAccessor(function(d) {
+	var ret = summaryPanel_calculate(d);
+	// numberDisplay only allows a single value to be returned
+	return ret.files;
+  });
+  
+var chartSummaryYearDistance = dc.numberDisplay("#chart-summary-year-distance");
+var yearDistanceSummaryGroup = group_reduceMap(perYearDim.group(), function(d) { return d.File+d.PointIndex; });
+
+chartSummaryYearDistance
+  .group({
+	  value: function() {
+		  var now = d3.time.year(new Date());
+		  var ret = yearDistanceSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
 		  return ret.length ? ret[0] : null;
 	  }
   })
@@ -429,6 +448,26 @@ chartSummaryYear
 	var ret = summaryPanel_calculate(d);
 	// numberDisplay only allows a single value to be returned
 	return ret.distance;
+  });
+
+var chartSummaryYearTime = dc.numberDisplay("#chart-summary-year-time");
+var yearTimeSummaryGroup = group_reduceMap(perYearDim.group(), function(d) { return d.File+d.PointIndex; });
+
+chartSummaryYearTime
+  .group({
+	  value: function() {
+		  var now = d3.time.year(new Date());
+		  var ret = yearTimeSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
+		  return ret.length ? ret[0] : null;
+	  }
+  })
+  .formatNumber(function(d){
+    return formatSeconds(d3.round(d / 1000), true, true);
+  })
+  .valueAccessor(function(d) {
+	var ret = summaryPanel_calculate(d);
+	// numberDisplay only allows a single value to be returned
+	return ret.time;
   });
 
 
