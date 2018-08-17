@@ -72,6 +72,81 @@ function group_reduceSum(group,accessor = function(d) { return d;},filter=undefi
     });
 }
 
+
+
+function group_reduceCountKey(group,keyfn) {
+  function add(p, v) {
+    if (!p.has(keyfn(v))) {
+      p.set(keyfn(v), 0);
+    }
+    
+    p.set(keyfn(v), p.get(keyfn(v))+1);
+    return p;
+  }
+
+  function rem(p, v) {
+    p.set(keyfn(v), p.get(keyfn(v))-1);
+    if (p.get(keyfn(v)) <= 0) {
+      p.remove(keyfn(v));
+    }
+    return p;
+  }
+
+  function init() {
+    return d3.map()
+  }
+  
+  return group.reduce(add,rem,init);
+}
+
+function group_reduceKeySum(group,fn,uniq) {
+  
+  function add(p, v, nf) {
+    var key = v.key;
+    var val = fn(v);
+    
+    if (!p.has(key)) {
+      p.set(key, {count: 0, value: 0});
+    }
+    
+    p.get(key).count++;
+    
+    if (p.get(key).count == 1 || !uniq)  {
+      p.get(key).value += val;
+    }
+    
+    return p;
+  }
+
+  function rem(p, v, nf) {
+    var key = v.key;
+    var val = fn(v);
+    
+    if (p.get(key).count == 1 || !uniq)  {
+      p.get(key).value -= val;
+    }
+  
+    p.get(key).count--;
+    
+    if (p.get(key).count == 0) {
+      p.remove(key);
+    }
+    
+    return p;
+  }
+
+  function init() {
+    return d3.map()
+  }
+  
+  return group.reduce(add,rem,init);
+}
+
+
+
+
+
+
 function group_reduceMap(group,keyFunc) {
   return group.reduce(
 	function(p,v) {
@@ -218,7 +293,7 @@ chartAvgCadence
 
 var chartActivityTable = dc.dataTable("#chart-activity-table");
 
-var activityCountGroup = group_reduceMap(activityDim.group(), function(d){return d.File; });
+var activityCountGroup = group_reduceCountKey(activityDim.group(), function(d){return d.File; });
 
 chartActivityTable
   .dimension({
@@ -251,7 +326,7 @@ chartActivityTable
 
 var chartLapTypeTable = dc.dataTable("#chart-laptype-table");
 
-var lapTypeCountGroup = group_reduceMap(lapTypeDim.group(), function(d){return d.File; });
+var lapTypeCountGroup = group_reduceCountKey(lapTypeDim.group(), function(d){return d.File; });
 
 chartLapTypeTable
   .dimension({
