@@ -551,7 +551,10 @@ d3.csv('/activities.csv', function(activities) {
     
     // length represents the type of workout, in minutes
     var lenRegex = /^([0-9]+)\-([0-9]+)\-([0-9]+)$/g;
+	var numRegex = /^[0-9]+$/;
+	var intervalRegex = /^\^([0-9]+):([0-9]+)\/([0-9]+):([0-9]+)$/;
     var lenMatch = lenRegex.exec(a.Length);
+	var intervalMatch = intervalRegex.exec(a.Length);
     if (lenMatch != null) {
       var start = 0;
       var lenWarmup = +lenMatch[1]*60*1000;
@@ -563,13 +566,26 @@ d3.csv('/activities.csv', function(activities) {
       var cooldownEnd = workoutEnd + lenCooldown;
       
       a.Length = {
+		Type: 'Training',
         Warmup: [0, warmupEnd], 
         Workout: [warmupEnd, workoutEnd], 
         CoolDown: [workoutEnd,cooldownEnd]};
-    } else if (/^[0-9]+$/) {
-      a.Length = {Workout: [0,+a.Length*60*1000]};
+    } else if (numRegex.exec(a.Length) != null) {
+      a.Length = {Type: 'Training', Workout: [0,(+a.Length)*60*1000]};
+	} else if (a.Length == "*") {
+	  a.Length = {Type: 'Race'};
+	} else if (intervalMatch != null) {
+	  // Time-based intervals, workoutmin:workoutsec/restmin:restsec
+	  a.Length = {
+		  Type: 'Intervals',
+		  Workout: (+intervalMatch[1]*60*1000)+(+intervalMatch[2]*1000),
+		  Rest: (+intervalMatch[3]*60*1000)+(+intervalMatch[4]*1000)
+	  };
+	  
+	  a._intervalLen = a.Length.Workout + a.Length.Rest;
     } else {
       console.log("Activity has invalid length " + a.Length,a);
+	  a.Length = {Type: 'Unknown'};
     }
     
     queue.defer(function(activity, cb) {
@@ -620,7 +636,7 @@ d3.csv('/activities.csv', function(activities) {
         if (a == undefined || i == 0) {
           a = d._activity;
           
-          lengthKeys = d3.keys(a.Length);
+          lengthKeys = d3.keys(a.Length).filter(function(z) { return z !== 'Type'; });
           
           elapsedTime = 0;
           movingTime = 0;
@@ -664,21 +680,31 @@ d3.csv('/activities.csv', function(activities) {
             movingTime += d.TimePoint;
             d.TimeMoving = movingTime;
 
-          if (lengthKeys.length == 1) {
-            d.LapType = lengthKeys[0];
-          } else if (lengthKeys.length == 3) {
-            lengthKeys.forEach(function(k) {
-              if (d.TimeMoving >= a.Length[k][0] &&
-                  d.TimeMoving <= a.Length[k][1]) {
-                d.LapType = k;
-              }
-            });
-            if (!d.LapType) {
-              d.LapType = "Unknown1";
-            }
-          } else {
-            d.LapType = "Unknown2";
-          }
+			if (a.Length.Type == 'Unknown') {
+				d.LapType = 'Unknown';
+			} else if (a.Length.Type == 'Training') {
+			  if (lengthKeys.length == 1) {
+				d.LapType = lengthKeys[0];
+			  } else if (lengthKeys.length == 3) {
+				lengthKeys.forEach(function(k) {
+				  if (d.TimeMoving >= a.Length[k][0] &&
+					  d.TimeMoving <= a.Length[k][1]) {
+					d.LapType = k;
+				  }
+				});
+				if (!d.LapType) {
+				  d.LapType = "Unknown1";
+				}
+			  } 
+			} else if (a.Length.Type == 'Race') {
+				d.LapType = 'Race';
+			} else if (a.Length.Type == 'Intervals') {
+				if (d.TimeMoving % a._intervalLen < a.Length.Workout) {
+					d.LapType = 'Workout';
+				} else {
+					d.LapType = 'Rest';
+				}
+			}
 
           data_toload.push(d);
         }
