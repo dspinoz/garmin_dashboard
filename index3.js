@@ -30,6 +30,7 @@ var timeTypeDim = facts.dimension(function(d) {
   return "Unknown";
 });
 var perMinuteDim = facts.dimension(function(d) { return d3.time.minute(d.Time); });
+var deviceDim = facts.dimension(function(d) { return d.Device; });
 
 
 function group_get_length(group) {
@@ -354,6 +355,42 @@ chartLapTypeTable
   .on('renderlet', function(chart) {
     chart.selectAll('tr.dc-table-group').style('display','none');
   });
+  
+  
+var chartDeviceTable = dc.dataTable("#chart-device-table");
+
+var deviceCountGroup = group_reduceCountKey(deviceDim.group(), function(d){return d.File; });
+
+chartDeviceTable
+  .dimension({
+      filter: function(f) {
+        deviceDim.filter(f);
+      },
+      filterExact: function(v) {
+        deviceDim.filterExact(v);
+      },
+      filterFunction: function(f) {
+        deviceDim.filterFunction(f);
+      },
+      filterRange: function(r) {
+        deviceDim.filterRange(r);
+      },
+      bottom: function(sz) {
+        var gdata = deviceCountGroup.all();
+        return gdata;
+      }
+  })
+  .group(function(d) { return "Activities"; })
+  .columns([
+    function(d) { return d.key; },
+    function(d) { return "<span class=\"badge\">"+d.value.size()+"</span>"; }
+  ])
+  .on('renderlet', function(chart) {
+    chart.selectAll('tr.dc-table-group').style('display','none');
+  });
+  
+  
+  
 
 function timePanel_register(type,disable=[]) {
   d3.select('#panel-'+type+'-time')
@@ -590,9 +627,12 @@ d3.csv('/activities.csv', function(activities) {
     
     queue.defer(function(activity, cb) {
       console.log('/activities/'+activity.File);
+	  
+    d3.csv('/device/'+activity.File, function(err,data) {
       d3.csv('/activities/'+activity.File, function(d,i) {
         d._activity = activity;
       
+		d.Device = data.length ? data[0].Device : "Unknown";
         d.File = activity.File;
         d.Lap = +d.Lap;
         d.Distance = +d.Distance;
@@ -611,6 +651,7 @@ d3.csv('/activities.csv', function(activities) {
         d3.select('.progress-bar').classed('progress-bar-success', true).style('width', ((++complete/total)*100)+'%');
         cb(err,data);
       });
+	});
     }, a);
   }
   

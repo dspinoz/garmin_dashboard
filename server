@@ -6,6 +6,9 @@ from bottle import route, run, template, static_file, response
 xslt = ET.parse('tcx_to_csv.xsl')
 transform = ET.XSLT(xslt)
 
+device_xslt = ET.parse('tcx_to_device.xsl')
+device_transform = ET.XSLT(device_xslt)
+
 @route('/hello/<name>')
 def index(name):
     return template('<b>Hello {{name}}</b>!', name=name)
@@ -19,6 +22,12 @@ def activities_tcx(path):
   dom = ET.parse('./activities/%s' %(path))
   response.content_type = 'text/text'
   return str(transform(dom))
+  
+@route('/device/<path:path>')
+def device_tcx(path):
+  dom = ET.parse('./activities/%s' %(path))
+  response.content_type = 'text/text'
+  return str(device_transform(dom))
 
 @route('/index.html')
 def index():
