@@ -622,7 +622,7 @@ chartHRZoneTable
       bottom: function(sz) {
 		// TODO consolidate into data_hrZone
 		var allzones = d3.map({
-			0:{html:'<span>&lt;130</span>',value:d3.map()},
+			0:{html:'<span>&le;129</span>',value:d3.map()},
 			1:{html:'<span>130-139 <small>Z1</small></span>',value:d3.map()},
 			2:{html:'<span>139-149 <small>Z2</small></span>',value:d3.map()},
 			3:{html:'<span>149-163 <small>Z3</small></span>',value:d3.map()},
