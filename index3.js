@@ -531,6 +531,75 @@ summaryPanel_create('day',d3.time.day);
 
 
 
+var chartSpeedTable = dc.dataTable("#chart-speed-table");
+var chartSpeedColors = colorbrewer.Greens[7];
+var speedDim = facts.dimension(function(d) { return d3.round(d.SpeedMM,0); });
+var speedCountGroup = group_reduceCountKey(speedDim.group(), function(d){return d.File; });
+var speedQuantile = d3.scale.quantile().range(chartSpeedColors);
+
+chartSpeedTable
+  .dimension({
+      filter: function(f) {
+        speedDim.filter(f);
+      },
+      filterExact: function(v) {
+        speedDim.filterExact(v);
+      },
+      filterFunction: function(f) {
+        speedDim.filterFunction(f);
+      },
+      filterRange: function(r) {
+        speedDim.filterRange(r);
+      },
+      bottom: function(sz) {
+        var all = speedCountGroup.all();
+		var extent = d3.extent(all,function(d){ return d.key; })
+		
+		//automatically generate quantile for the values contained in the group
+		speedQuantile.domain(extent);
+		
+		// stores color (from the quantile scale) against file and count (for points)
+		var ret = d3.map();
+		all.forEach(function(d) {
+			var kq = speedQuantile(d.key);
+			if (!ret.has(kq)) {
+				ret.set(kq,d3.map());
+			}
+			d.value.entries().forEach(function(e) {
+				if (!ret.get(kq).has(e.key)) {
+					ret.get(kq).set(e.key,0);
+				}
+				ret.get(kq).set(e.key, ret.get(kq).get(e.key) + e.value);
+			});
+		});
+		
+		return ret.entries();
+      }
+  })
+  .group(function(d) { return "Activities"; })
+  .columns([
+    function(d) { return '<svg height=20 width=20><rect width="20" height="20" stroke="'+d.key+'" fill="'+d.key+'"></rect></svg>'; },
+    function(d) { 
+		var ext = speedQuantile.invertExtent(d.key);
+		var speedMM = ext[0] + ((ext[1]-ext[0])/2);
+		
+		var speedMS = speedMM/60;
+		var paceSK = 1000 / speedMS;
+		var speedKH = speedMS*3.6;
+		
+		return d3.round(ext[0],0)+"-"+d3.round(ext[1],0) +' <small>'+formatSeconds(paceSK,false)+'<small>m/km</small></small> <small>'+d3.round(speedKH,2)+'<small>kmh</small></small>'; 
+	},
+    function(d) { return '<span class="badge">'+d.value.size()+'</span>'; },
+    function(d) { return "<small>"+d3.sum(d.value.entries(),function(d){return d.value; })+"</small>"; }
+  ])
+  .on('renderlet', function(chart) {
+    chart.selectAll('tr.dc-table-group').style('display','none');
+  });
+
+
+
+
+
 var chartHRZoneTable = dc.dataTable("#chart-hrzone-table");
 var chartHRZoneColors = colorbrewer.Reds[7];
 
