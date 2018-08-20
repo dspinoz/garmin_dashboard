@@ -551,6 +551,7 @@ chartHRZoneTable
         hrZoneDim.filterRange(r);
       },
       bottom: function(sz) {
+		// TODO consolidate into data_hrZone
 		var allzones = d3.map({
 			0:{html:'<span title="< 130 bpm">&lt;130</span>',value:d3.map()},
 			1:{html:'<span title="130-139 bpm">Z1</span>',value:d3.map()},
@@ -569,7 +570,6 @@ chartHRZoneTable
 		allzones.entries().forEach(function(d) {
 			d.value['color'] = chartHRZoneColors[d.key];
 		});
-		console.log('gg',allzones.entries());
         return allzones.entries();
       }
   })
