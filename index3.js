@@ -622,13 +622,13 @@ chartHRZoneTable
       bottom: function(sz) {
 		// TODO consolidate into data_hrZone
 		var allzones = d3.map({
-			0:{html:'<span title="< 130 bpm">&lt;130</span>',value:d3.map()},
-			1:{html:'<span title="130-139 bpm">Z1</span>',value:d3.map()},
-			2:{html:'<span title="139-149 bpm">Z2</span>',value:d3.map()},
-			3:{html:'<span title="149-163 bpm">Z3</span>',value:d3.map()},
-			4:{html:'<span title="163-176 bpm">Z4</span>',value:d3.map()},
-			5:{html:'<span title="176-189 bpm">Z5</span>',value:d3.map()},
-			6:{html:'<span title="190 bpm">&ge;190</span>',value:d3.map()}
+			0:{html:'<span>&lt;130</span>',value:d3.map()},
+			1:{html:'<span>130-139 <small>Z1</small></span>',value:d3.map()},
+			2:{html:'<span>139-149 <small>Z2</small></span>',value:d3.map()},
+			3:{html:'<span>149-163 <small>Z3</small></span>',value:d3.map()},
+			4:{html:'<span>163-176 <small>Z4</small></span>',value:d3.map()},
+			5:{html:'<span>176-189 <small>Z5</small></span>',value:d3.map()},
+			6:{html:'<span>&ge;190</span>',value:d3.map()}
 		});
 		
         hrZoneCountGroup.all().forEach(function(d) {
