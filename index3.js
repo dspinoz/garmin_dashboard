@@ -7,6 +7,16 @@ var timeScale = d3.time.second;
 var filenameColors = d3.scale.category10();
 var facts = crossfilter();
 
+function data_hrZone(d) {
+	if (d.HeartRate < 130) return 0;
+	if (d.HeartRate < 139) return 1;
+	if (d.HeartRate < 149) return 2;
+	if (d.HeartRate < 163) return 3;
+	if (d.HeartRate < 176) return 4;
+	if (d.HeartRate < 189) return 5;
+	return 6;
+}
+
 
 
 var chartPointsCount = dc.numberDisplay("#chart-total-points");
@@ -31,6 +41,7 @@ var timeTypeDim = facts.dimension(function(d) {
 });
 var perMinuteDim = facts.dimension(function(d) { return d3.time.minute(d.Time); });
 var deviceDim = facts.dimension(function(d) { return d.Device; });
+var hrZoneDim = facts.dimension(function(d) { return data_hrZone(d); });
 
 
 function group_get_length(group) {
@@ -517,6 +528,70 @@ summaryPanel_create('year',d3.time.year);
 summaryPanel_create('month',d3.time.month);
 summaryPanel_create('week',d3.time.week);
 summaryPanel_create('day',d3.time.day);
+
+
+
+var chartHRZoneTable = dc.dataTable("#chart-hrzone-table");
+var chartHRZoneColors = colorbrewer.Reds[7];
+
+var hrZoneCountGroup = group_reduceCountKey(hrZoneDim.group(), function(d){return d.File; });
+
+chartHRZoneTable
+  .dimension({
+      filter: function(f) {
+        hrZoneDim.filter(f);
+      },
+      filterExact: function(v) {
+        hrZoneDim.filterExact(v);
+      },
+      filterFunction: function(f) {
+        hrZoneDim.filterFunction(f);
+      },
+      filterRange: function(r) {
+        hrZoneDim.filterRange(r);
+      },
+      bottom: function(sz) {
+		var allzones = d3.map({
+			0:{html:'<span title="< 130 bpm">&lt;130</span>',value:d3.map()},
+			1:{html:'<span title="130-139 bpm">Z1</span>',value:d3.map()},
+			2:{html:'<span title="139-149 bpm">Z2</span>',value:d3.map()},
+			3:{html:'<span title="149-163 bpm">Z3</span>',value:d3.map()},
+			4:{html:'<span title="163-176 bpm">Z4</span>',value:d3.map()},
+			5:{html:'<span title="176-189 bpm">Z5</span>',value:d3.map()},
+			6:{html:'<span title="190 bpm">&ge;190</span>',value:d3.map()}
+		});
+		
+        hrZoneCountGroup.all().forEach(function(d) {
+			d.value.entries().forEach(function(e) {
+				allzones.get(d.key).value.set(e.key,e.value);
+			});
+		});
+		allzones.entries().forEach(function(d) {
+			d.value['color'] = chartHRZoneColors[d.key];
+		});
+		console.log('gg',allzones.entries());
+        return allzones.entries();
+      }
+  })
+  .group(function(d) { return "Activities"; })
+  .columns([
+    function(d) { return '<svg height=20 width=20><rect width="20" height="20" stroke="'+d.value.color+'" '+(d.value.value.size() == 0 ? 'fill-opacity="0.3"' : '')+' fill="'+d.value.color+'"></rect></svg>'; },
+    function(d) { return d.value.html; },
+    function(d) { return "<span class=\"badge\">"+d.value.value.size()+"</span>"; },
+    function(d) { return "<small>"+d3.sum(d.value.value.entries(),function(d){return d.value; })+"</small>"; }
+  ])
+  .on('renderlet', function(chart) {
+    chart.selectAll('tr.dc-table-group').style('display','none');
+  });
+  
+
+
+
+
+
+
+
+
 
 
 
