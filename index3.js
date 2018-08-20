@@ -578,7 +578,7 @@ chartSpeedTable
   })
   .group(function(d) { return "Activities"; })
   .columns([
-    function(d) { return '<svg height=20 width=20><rect width="20" height="20" stroke="'+d.key+'" fill="'+d.key+'"></rect></svg>'; },
+    function(d) { return '<svg height=20 width=20><rect width="20" height="20" stroke="'+d.key+'" fill="'+d.key+'" '+(d.value.size() == 0 ? 'fill-opacity="0.3"' : '')+'></rect></svg>'; },
     function(d) { 
 		var ext = speedQuantile.invertExtent(d.key);
 		var speedMM = ext[0] + ((ext[1]-ext[0])/2);
