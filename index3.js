@@ -365,6 +365,14 @@ chartLapTypeTable
   ])
   .on('renderlet', function(chart) {
     chart.selectAll('tr.dc-table-group').style('display','none');
+    
+    chart.selectAll('.dc-table-row')
+      .on('click', function(d) {
+        dc.events.trigger(function () {
+          chart.filter(d.key);
+          chart.redrawGroup();
+        });
+      });
   });
   
   
