@@ -443,15 +443,19 @@ chartActivitySummaryTable
   .group(function(d) { return "Activities"; })
   .columns([
     function(d) { return '<span title="'+d.value.entries()[0].value.ActivityStart+'">'+d.key+'</span> '+ "<small>"+d.value.size()+"</small>"; },
-    function(d) { return formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH < 6 ? e.value.TimePoint : 0;})/1000,false); },
-    function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH < 6 ? e.value.DistancePoint : 0;})/1000,2); },
-  
-    function(d) { return formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH >= 6 ? e.value.TimePoint : 0;})/1000,false); },
-    function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH >= 6 ? e.value.DistancePoint : 0;})/1000,2); },
-
+    function(d) { 
+		var walkTime =  formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH < 6 ? e.value.TimePoint : 0;})/1000,false);
+		var walkDistance = d3.round(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH < 6 ? e.value.DistancePoint : 0;})/1000,2);
+		return walkTime + " / " + walkDistance;
+	},
+    function(d) { 
+		var runTime = formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH >= 6 ? e.value.TimePoint : 0;})/1000,false);
+		var runDistance = d3.round(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH >= 6 ? e.value.DistancePoint : 0;})/1000,2);
+		return runTime + " / " + runDistance;
+	},
     function(d) { return formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.PaceSK;})/d.value.size(),false); },
-    function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.SpeedKH;})/d.value.size(),1); },
-    function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.SpeedMM})/d.value.size(),1); },
+    function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.SpeedKH;})/d.value.size(),2); },
+    function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.SpeedMM})/d.value.size(),2); },
 
     function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.HeartRate})/d.value.size(),1); },
     function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.Cadence})/d.value.size(),1)*2; },
