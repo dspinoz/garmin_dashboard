@@ -442,7 +442,7 @@ chartActivitySummaryTable
   })
   .group(function(d) { return "Activities"; })
   .columns([
-    function(d) { return d.key+' '+ "<small>"+d.value.size()+"</small>"; },
+    function(d) { return '<span title="'+d.value.entries()[0].value.ActivityStart+'">'+d.key+'</span> '+ "<small>"+d.value.size()+"</small>"; },
     function(d) { return formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH < 6 ? e.value.TimePoint : 0;})/1000,false); },
     function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH < 6 ? e.value.DistancePoint : 0;})/1000,2); },
   
@@ -882,6 +882,7 @@ d3.csv('/activities.csv', function(activities) {
       var lengthKeys = []
       var elapsedTime = 0;
       var movingTime = 0;
+	  var activityStart = 0;
       
       for (var i = 0; i < activities[ai].length; i++) {
         var d = activities[ai][i];
@@ -892,6 +893,7 @@ d3.csv('/activities.csv', function(activities) {
           
           elapsedTime = 0;
           movingTime = 0;
+          activityStart = d.Time;
             
           //TODO stackActivity(a.File);
         }
@@ -904,6 +906,7 @@ d3.csv('/activities.csv', function(activities) {
           d.PointIndex = i;
           d.Activity = a.Name;
           d.ActivityLength = a.Length;
+          d.ActivityStart = activityStart;
           d.DistancePoint = i == 0 ? d.Distance : d.Distance - data[i-1].Distance;
           d.TimePoint = i == 0 ? 1000 : d.Time - data[i-1].Time;
 
