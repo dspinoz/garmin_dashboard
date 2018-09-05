@@ -843,8 +843,13 @@ d3.csv('/activities.csv', function(activities) {
     queue.defer(function(activity, cb) {
       console.log('/activities/'+activity.File);
 	  
-    d3.csv('/device/'+activity.File, function(err,data) {
-      d3.csv('/activities/'+activity.File, function(d,i) {
+	// join multiple activities together to form a single
+	activity.files = activity.File.split('&');
+	  
+	  activity.files.forEach(function(f) {
+	  
+    d3.csv('/device/'+f, function(err,data) {
+      d3.csv('/activities/'+f, function(d,i) {
         d._activity = activity;
       
 		d.Device = data.length ? data[0].Device : "Unknown";
@@ -867,6 +872,7 @@ d3.csv('/activities.csv', function(activities) {
         cb(err,data);
       });
 	});
+	  });
     }, a);
   }
   
