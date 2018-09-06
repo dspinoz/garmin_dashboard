@@ -462,7 +462,12 @@ chartActivitySummaryTable
   })
   .group(function(d) { return "Activities"; })
   .columns([
-    function(d) { return '<span title="'+d.value.entries()[0].value.ActivityStart+'">'+d.key+'</span> '+ "<small>"+d.value.size()+"</small>"; },
+    function(d) { console.log('activity',d);
+	if (d.value.size())
+		return '<span title="'+d.value.entries()[0].value.ActivityStart+'">'+d.key+'</span> '+ "<small>"+d.value.size()+"</small>";
+	else
+		return '<span>'+d.key+'</span>';
+	},
     function(d) { 
 		var runTime = formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.TimePoint;})/1000,false);
 		var runDistance = d3.round(d3.sum(d.value.entries(), function(e){return e.value.DistancePoint;})/1000,2);
