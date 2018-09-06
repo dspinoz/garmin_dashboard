@@ -444,13 +444,8 @@ chartActivitySummaryTable
   .columns([
     function(d) { return '<span title="'+d.value.entries()[0].value.ActivityStart+'">'+d.key+'</span> '+ "<small>"+d.value.size()+"</small>"; },
     function(d) { 
-		var walkTime =  formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH < 6 ? e.value.TimePoint : 0;})/1000,false);
-		var walkDistance = d3.round(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH < 6 ? e.value.DistancePoint : 0;})/1000,2);
-		return walkTime + " / " + walkDistance;
-	},
-    function(d) { 
-		var runTime = formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH >= 6 ? e.value.TimePoint : 0;})/1000,false);
-		var runDistance = d3.round(d3.sum(d.value.entries(), function(e){return e.value.LapType != 'Stationary' && e.value.SpeedKH >= 6 ? e.value.DistancePoint : 0;})/1000,2);
+		var runTime = formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.TimePoint;})/1000,false);
+		var runDistance = d3.round(d3.sum(d.value.entries(), function(e){return e.value.DistancePoint;})/1000,2);
 		return runTime + " / " + runDistance;
 	},
     function(d) { return formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.PaceSK;})/d.value.size(),false); },
