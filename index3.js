@@ -922,6 +922,7 @@ d3.csv('/activities.csv', function(activities) {
 			d.PointIndex = pointIndex;
 			d.Activity = activity.Name;
 			d.File = activity.File;
+			d.Device = activity.Device;
 			d.ActivityLength = activity.Length;
 			d.ActivityStart = activityStart;
 			d.DistancePoint = pointIndex == 0 ? d.Distance : d.Distance - data[pointIndex-1].Distance;
