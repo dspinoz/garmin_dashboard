@@ -775,7 +775,6 @@ function load_data() {
     
     d3.select('.progress').style('display', 'none');
     //TODO refreshDataTable();
-    console.log('done loading data');
     return;
   }
   
@@ -882,27 +881,6 @@ d3.csv('/activities.csv', function(activities) {
         cb(err,{activity:activity, points:data});
       });
 	};
-	
-		/*
-		var qqq2 = d3.queue();
-		
-	  activity.files.forEach(function(f) {
-		
-		qqq2.defer(function(d,cb){
-		console.log("QQQ2 defer device",f);
-			d3.csv(d.url, function(err,data) {
-				if (err) { cb(err); return;}
-				d.activity.Device = data.length ? data[0].Device : "Unknown";
-		console.log("QQQ2 defer device",d.url,data[0].Device);
-			});
-		}, {activity: activity, url:'/device/'+f});
-	  });
-	  
-	  qqq2.awaitAll(function(err,devices) {
-		console.log("QQQ2 all",err,devices);
-		cb(err,devices);
-	  });
-		*/
 
 	var qqqDev = d3.queue();
 	var qqqPoints = d3.queue();
@@ -917,11 +895,10 @@ d3.csv('/activities.csv', function(activities) {
   });
 	
 	qqqDev.awaitAll(function(err,activities_per_file) {
-		console.log("QQQ dev",err,activities_per_file);
+		//updated device
 	});
 	
 	qqqPoints.awaitAll(function(err,points_per_file) {
-		console.log("QQQ points",err,points_per_file);
 		
       var lengthKeys = [];
       var elapsedTime = 0;
@@ -931,14 +908,13 @@ d3.csv('/activities.csv', function(activities) {
 	  
 	  var activity = points_per_file[0].activity;
 	  var data = d3.merge(points_per_file.map(function(d){return d.points;}));
-	  console.log('QQQ points data',activity,data);
+	  
 	  for(var i = 0; i < data.length; i++) {
 		  
 		  var d = data[i];
 		  
 			if (pointIndex == 0) {
 				//the first data point
-			  console.log('activity',activity.File,activity.Length);
 			  lengthKeys = d3.keys(activity.Length).filter(function(z) { return z !== 'Type'; });
 			  activityStart = d.Time;
 			}
