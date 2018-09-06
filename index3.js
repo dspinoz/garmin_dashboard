@@ -378,12 +378,22 @@ chartLapTypeTable
     chart.selectAll('tr.dc-table-group').style('display','none');
     
     chart.selectAll('.dc-table-row')
+      .style('cursor','pointer')
+      .on('mouseover',function(d) {
+        d3.select(this).style('font-weight','bold');
+      })
+      .on('mouseout',function(d) {
+        d3.select(this).style('font-weight','normal');
+      })
       .on('click', function(d) {
+        d._filtered=!d._filtered;
         dc.events.trigger(function () {
           chart.filter(d.key);
           chart.redrawGroup();
         });
-      });
+      })
+      .classed('success',function(d) { return d._filtered; })
+      .classed('active',function(d){ return chart.hasFilter() == 0 ? false : !d._filtered; });
   });
   
   
