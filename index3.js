@@ -386,14 +386,13 @@ chartLapTypeTable
         d3.select(this).style('font-weight','normal');
       })
       .on('click', function(d) {
-        d._filtered=!d._filtered;
         dc.events.trigger(function () {
           chart.filter(d.key);
           chart.redrawGroup();
         });
       })
-      .classed('success',function(d) { return d._filtered; })
-      .classed('active',function(d){ return chart.hasFilter() == 0 ? false : !d._filtered; });
+      .classed('success',function(d) { return chart.filters().filter(function(f){return f==d.key; }).length > 0; })
+      .classed('active',function(d){ return chart.hasFilter() == 0 ? false : chart.filters().filter(function(f){return f!=d.key; }).length > 0; });
   });
   
   
