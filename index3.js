@@ -17,6 +17,17 @@ function data_hrZone(d) {
 	return 6;
 }
 
+function is_stationary(d) {
+	return d.LapType == "Stationary";
+}
+
+function is_walking(d) {
+	return d.LapType != "Stationary" && d.SpeedKH < 6;
+}
+
+function is_running(d) {
+	return d.LapType != "Stationary" && d.SpeedKH >= 6;
+}
 
 
 var chartPointsCount = dc.numberDisplay("#chart-total-points");
@@ -34,9 +45,9 @@ var activityDim = facts.dimension(function(d) { return d.Activity; });
 var fileDim = facts.dimension(function(d) { return d.File; });
 var lapTypeDim = facts.dimension(function(d) { return d.LapType; });
 var timeTypeDim = facts.dimension(function(d) {
-  if (d.LapType == "Stationary") return "stationary";
-  if (d.LapType != "Stationary" && d.SpeedKH < 6) return "walking";
-  if (d.LapType != "Stationary" && d.SpeedKH >= 6) return "running";
+  if (is_stationary(d)) return "stationary";
+  if (is_walking(d)) return "walking";
+  if (is_running(d)) return "running";
   return "Unknown";
 });
 var perMinuteDim = facts.dimension(function(d) { return d3.time.minute(d.Time); });
@@ -231,7 +242,7 @@ chartTotalTime
 
 var chartTotalStationaryTime = dc.numberDisplay("#chart-total-stationarytime");
 chartTotalStationaryTime
-  .group(group_reduceSum(facts.groupAll(), function(d){return d.TimePoint; }, function(d){return d.LapType == "Stationary";}))
+  .group(group_reduceSum(facts.groupAll(), function(d){return d.TimePoint; }, is_stationary))
   .formatNumber(function(d) {
     return formatSeconds(d3.round(d / 1000), true, true);
   })
@@ -240,7 +251,7 @@ chartTotalStationaryTime
 
 var chartTotalWalkingTime = dc.numberDisplay("#chart-total-walkingtime");
 chartTotalWalkingTime
-  .group(group_reduceSum(facts.groupAll(), function(d){return d.TimePoint; }, function(d){return d.LapType != "Stationary" && d.SpeedKH < 6;}))
+  .group(group_reduceSum(facts.groupAll(), function(d){return d.TimePoint; }, is_walking))
   .formatNumber(function(d) {
     return formatSeconds(d3.round(d / 1000), true, true);
   })
@@ -249,7 +260,7 @@ chartTotalWalkingTime
 
 var chartTotalRunningTime = dc.numberDisplay("#chart-total-runningtime");
 chartTotalRunningTime
-  .group(group_reduceSum(facts.groupAll(), function(d){return d.TimePoint; }, function(d){return d.LapType != "Stationary" && d.SpeedKH >= 6;}))
+  .group(group_reduceSum(facts.groupAll(), function(d){return d.TimePoint; }, is_running))
   .formatNumber(function(d) {
     return formatSeconds(d3.round(d / 1000), true, true);
   })
