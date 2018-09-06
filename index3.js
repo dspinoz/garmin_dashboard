@@ -8,13 +8,14 @@ var filenameColors = d3.scale.category10();
 var facts = crossfilter();
 
 function data_hrZone(d) {
-	if (d.HeartRate < 130) return 0;
-	if (d.HeartRate < 139) return 1;
-	if (d.HeartRate < 149) return 2;
-	if (d.HeartRate < 163) return 3;
-	if (d.HeartRate < 176) return 4;
-	if (d.HeartRate < 189) return 5;
-	return 6;
+	if (d.HeartRate == 0) return 0;
+	if (d.HeartRate < 130) return 1;
+	if (d.HeartRate < 139) return 2;
+	if (d.HeartRate < 149) return 3;
+	if (d.HeartRate < 163) return 4;
+	if (d.HeartRate < 176) return 5;
+	if (d.HeartRate < 189) return 6;
+	return 7;
 }
 
 function is_stationary(d) {
@@ -29,6 +30,28 @@ function is_running(d) {
 	return d.LapType != "Stationary" && d.SpeedKH >= 6;
 }
 
+function interactive_dataTable(thechart) {
+  return thechart.on('renderlet', function(chart) {
+    chart.selectAll('tr.dc-table-group').style('display','none');
+    
+    chart.selectAll('.dc-table-row')
+      .style('cursor','pointer')
+      .on('mouseover',function(d) {
+        d3.select(this).style('font-weight','bold');
+      })
+      .on('mouseout',function(d) {
+        d3.select(this).style('font-weight','normal');
+      })
+      .on('click', function(d) {
+        dc.events.trigger(function () {
+          chart.filter(d.key);
+          chart.redrawGroup();
+        });
+      })
+      .classed('success',function(d) { return chart.filters().filter(function(f){return f==d.key; }).length > 0; })
+      .classed('active',function(d){ return chart.hasFilter() == 0 ? false : chart.filters().filter(function(f){return f!=d.key; }).length > 0; });
+  });
+}
 
 var chartPointsCount = dc.numberDisplay("#chart-total-points");
 
@@ -313,7 +336,7 @@ chartAvgCadence
   });
 
 
-var chartActivityTable = dc.dataTable("#chart-activity-table");
+var chartActivityTable = interactive_dataTable(dc.dataTable("#chart-activity-table"));
 
 var activityCountGroup = group_reduceCountKey(activityDim.group(), function(d){return d.File; });
 
@@ -340,13 +363,9 @@ chartActivityTable
   .columns([
     function(d) { return d.key; },
     function(d) { return "<span class=\"badge\">"+d.value.size()+"</span>"; }
-  ])
-  .on('renderlet', function(chart) {
-    chart.selectAll('tr.dc-table-group').style('display','none');
-  });
+  ]);
 
-
-var chartLapTypeTable = dc.dataTable("#chart-laptype-table");
+var chartLapTypeTable = interactive_dataTable(dc.dataTable("#chart-laptype-table"));
 
 var lapTypeCountGroup = group_reduceCountKey(lapTypeDim.group(), function(d){return d.File; });
 
@@ -373,30 +392,10 @@ chartLapTypeTable
   .columns([
     function(d) { return d.key; },
     function(d) { return "<span class=\"badge\">"+d.value.size()+"</span>"; }
-  ])
-  .on('renderlet', function(chart) {
-    chart.selectAll('tr.dc-table-group').style('display','none');
-    
-    chart.selectAll('.dc-table-row')
-      .style('cursor','pointer')
-      .on('mouseover',function(d) {
-        d3.select(this).style('font-weight','bold');
-      })
-      .on('mouseout',function(d) {
-        d3.select(this).style('font-weight','normal');
-      })
-      .on('click', function(d) {
-        dc.events.trigger(function () {
-          chart.filter(d.key);
-          chart.redrawGroup();
-        });
-      })
-      .classed('success',function(d) { return chart.filters().filter(function(f){return f==d.key; }).length > 0; })
-      .classed('active',function(d){ return chart.hasFilter() == 0 ? false : chart.filters().filter(function(f){return f!=d.key; }).length > 0; });
-  });
+  ]);
   
   
-var chartDeviceTable = dc.dataTable("#chart-device-table");
+var chartDeviceTable = interactive_dataTable(dc.dataTable("#chart-device-table"));
 
 var deviceCountGroup = group_reduceCountKey(deviceDim.group(), function(d){return d.File; });
 
@@ -423,10 +422,7 @@ chartDeviceTable
   .columns([
     function(d) { return d.key; },
     function(d) { return "<span class=\"badge\">"+d.value.size()+"</span>"; }
-  ])
-  .on('renderlet', function(chart) {
-    chart.selectAll('tr.dc-table-group').style('display','none');
-  });
+  ]);
   
   
   
@@ -437,7 +433,7 @@ chartDeviceTable
 
 
 
-var chartActivitySummaryTable = dc.dataTable("#chart-activity-summary-table");
+var chartActivitySummaryTable = interactive_dataTable(dc.dataTable("#chart-activity-summary-table"));
 
 var activitySummaryGroup = group_reduceMap(fileDim.group(), function(d) { return d.PointIndex; });
 
@@ -480,10 +476,7 @@ chartActivitySummaryTable
     function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.HeartRate})/d.value.size(),1); },
     function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.Cadence})/d.value.size(),1)*2; },
 
-  ])
-  .on('renderlet', function(chart) {
-    chart.selectAll('tr.dc-table-group').style('display','none');
-  });
+  ]);
 
 
 
@@ -691,8 +684,8 @@ chartSpeedTable
 
 
 
-var chartHRZoneTable = dc.dataTable("#chart-hrzone-table");
-var chartHRZoneColors = colorbrewer.Reds[7];
+var chartHRZoneTable = interactive_dataTable(dc.dataTable("#chart-hrzone-table"));
+var chartHRZoneColors = d3.merge([['grey'],colorbrewer.Reds[7]]);
 
 var hrZoneCountGroup = group_reduceCountKey(hrZoneDim.group(), function(d){return d.File; });
 
@@ -713,13 +706,14 @@ chartHRZoneTable
       bottom: function(sz) {
 		// TODO consolidate into data_hrZone
 		var allzones = d3.map({
-			0:{html:'<span>&le;129</span>',value:d3.map()},
-			1:{html:'<span>130-139 <small>Z1</small></span>',value:d3.map()},
-			2:{html:'<span>139-149 <small>Z2</small></span>',value:d3.map()},
-			3:{html:'<span>149-163 <small>Z3</small></span>',value:d3.map()},
-			4:{html:'<span>163-176 <small>Z4</small></span>',value:d3.map()},
-			5:{html:'<span>176-189 <small>Z5</small></span>',value:d3.map()},
-			6:{html:'<span>&ge;190</span>',value:d3.map()}
+			0:{html:'<span>None</span>',value:d3.map()},
+			1:{html:'<span>&le;129</span>',value:d3.map()},
+			2:{html:'<span>130-139 <small>Z1</small></span>',value:d3.map()},
+			3:{html:'<span>139-149 <small>Z2</small></span>',value:d3.map()},
+			4:{html:'<span>149-163 <small>Z3</small></span>',value:d3.map()},
+			5:{html:'<span>163-176 <small>Z4</small></span>',value:d3.map()},
+			6:{html:'<span>176-189 <small>Z5</small></span>',value:d3.map()},
+			7:{html:'<span>&ge;190</span>',value:d3.map()}
 		});
 		
         hrZoneCountGroup.all().forEach(function(d) {
@@ -739,10 +733,7 @@ chartHRZoneTable
     function(d) { return d.value.html; },
     function(d) { return "<span class=\"badge\">"+d.value.value.size()+"</span>"; },
     function(d) { return "<small>"+d3.sum(d.value.value.entries(),function(d){return d.value; })+"</small>"; }
-  ])
-  .on('renderlet', function(chart) {
-    chart.selectAll('tr.dc-table-group').style('display','none');
-  });
+  ]);
   
 
 
