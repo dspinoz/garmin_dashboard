@@ -788,18 +788,20 @@ d3.csv('/activities.csv', function(activities) {
   console.log('activities',activities);
   //TODO redraw();
   
+  var activity_done = 0;
   var total = activities.length;
   var complete = 0;
-  
-  var queue = d3.queue();
 
   for(var i = 0; i < total; i++) {
     var a = activities[i];
+    var qqq = d3.queue();
     
     if (a.File == "" || a.Name == undefined || a.File[0] == '#') {
       console.log('Skipped',a);
       continue;
     }
+	
+	a.files = a.File.split('&');
     
     // length represents the type of workout, in minutes
     var lenRegex = /^([0-9]+)\-([0-9]+)\-([0-9]+)$/g;
@@ -839,21 +841,24 @@ d3.csv('/activities.csv', function(activities) {
       console.log("Activity has invalid length " + a.Length,a);
 	  a.Length = {Type: 'Unknown'};
     }
-    
-    queue.defer(function(activity, cb) {
-      console.log('/activities/'+activity.File);
-	  
-	// join multiple activities together to form a single
-	activity.files = activity.File.split('&');
-	  
-	  activity.files.forEach(function(f) {
-	  
-    d3.csv('/device/'+f, function(err,data) {
-      d3.csv('/activities/'+f, function(d,i) {
-        d._activity = activity;
+	
+	var getDeviceData = function(activity,fileName,cb) {
+		d3.csv('/device/'+fileName, function(err,data) {
+			//set the activity so can be used when processing data points
+			var dev = data.length ? data[0].Device : "Unknown";
+			if (!activity.Device) {
+				activity.Device = "";
+			}
+			if (dev != activity.Device) {
+				activity.Device += dev;
+			}
+			cb(err, activity);
+		})
+	};
+	
+	var getPointData = function(activity,fileName,cb) {
+      d3.csv('/activities/'+fileName, function(d,i) {
       
-		d.Device = data.length ? data[0].Device : "Unknown";
-        d.File = activity.File;
         d.Lap = +d.Lap;
         d.Distance = +d.Distance;
         d.Time = timeParser.parse(d.Time);
@@ -868,92 +873,129 @@ d3.csv('/activities.csv', function(activities) {
         
         return d;
       }, function(err,data) {
-        d3.select('.progress-bar').classed('progress-bar-success', true).style('width', ((++complete/total)*100)+'%');
-        cb(err,data);
+        cb(err,{activity:activity, points:data});
       });
-	});
+	};
+	
+		/*
+		var qqq2 = d3.queue();
+		
+	  activity.files.forEach(function(f) {
+		
+		qqq2.defer(function(d,cb){
+		console.log("QQQ2 defer device",f);
+			d3.csv(d.url, function(err,data) {
+				if (err) { cb(err); return;}
+				d.activity.Device = data.length ? data[0].Device : "Unknown";
+		console.log("QQQ2 defer device",d.url,data[0].Device);
+			});
+		}, {activity: activity, url:'/device/'+f});
 	  });
-    }, a);
-  }
-  
-  queue.awaitAll(function(err, activities) {
-    console.log('got all', err, activities);
-  
-    data_toload_complete = 0;
-    data_toload_total = 0;
-    for(var ai = 0; ai < activities.length; ai++) {
-      data_toload_total += activities[ai].length;
-    }
-  
-    for(var ai = 0; ai < activities.length; ai++) {
-      var a = undefined;
-      var data = activities[ai];
-      
-      var lengthKeys = []
+	  
+	  qqq2.awaitAll(function(err,devices) {
+		console.log("QQQ2 all",err,devices);
+		cb(err,devices);
+	  });
+		*/
+
+	var qqqDev = d3.queue();
+	var qqqPoints = d3.queue();
+		
+  a.files.forEach(function(f) {
+	qqqDev.defer(function(activity,cb) {
+		getDeviceData(activity,f,cb);
+	}, a);
+	qqqPoints.defer(function(activity,cb) {
+		getPointData(activity,f,cb);
+	}, a);
+  });
+	
+	qqqDev.awaitAll(function(err,activities_per_file) {
+		console.log("QQQ dev",err,activities_per_file);
+	});
+	
+	qqqPoints.awaitAll(function(err,points_per_file) {
+		console.log("QQQ points",err,points_per_file);
+		
+      var lengthKeys = [];
       var elapsedTime = 0;
       var movingTime = 0;
 	  var activityStart = 0;
-      
-      for (var i = 0; i < activities[ai].length; i++) {
-        var d = activities[ai][i];
-        if (a == undefined || i == 0) {
-          a = d._activity;
-          
-          lengthKeys = d3.keys(a.Length).filter(function(z) { return z !== 'Type'; });
-          
-          elapsedTime = 0;
-          movingTime = 0;
-          activityStart = d.Time;
-            
-          //TODO stackActivity(a.File);
-        }
-        
-        
-	  //TODO dynamic stacks based on activity filename
-	  //chartHRTime.stack(chartWeeksGroup, a.File, chartWeeksGroupAccessor(a.File))
-      
-        //data.forEach(function(d,i,arr) {
-          d.PointIndex = i;
-          d.Activity = a.Name;
-          d.ActivityLength = a.Length;
-          d.ActivityStart = activityStart;
-          d.DistancePoint = i == 0 ? d.Distance : d.Distance - data[i-1].Distance;
-          d.TimePoint = i == 0 ? 1000 : d.Time - data[i-1].Time;
+	  var pointIndex = 0;
+	  
+	  var activity = points_per_file[0].activity;
+	  var data = d3.merge(points_per_file.map(function(d){return d.points;}));
+	  console.log('QQQ points data',activity,data);
+	  for(var i = 0; i < data.length; i++) {
+		  
+		  var d = data[i];
+		  
+			if (pointIndex == 0) {
+				//the first data point
+			  console.log('activity',activity.File,activity.Length);
+			  lengthKeys = d3.keys(activity.Length).filter(function(z) { return z !== 'Type'; });
+			  activityStart = d.Time;
+			}
+			
+			d.PointIndex = pointIndex;
+			d.Activity = activity.Name;
+			d.File = activity.File;
+			d.ActivityLength = activity.Length;
+			d.ActivityStart = activityStart;
+			d.DistancePoint = pointIndex == 0 ? d.Distance : d.Distance - data[pointIndex-1].Distance;
+			if (d.DistancePoint < 0) {
+				//has moved negative as file distance has been reset! multiple activities joined together
+				d.DistancePointOld = d.DistancePoint;
+				d.DistancePoint = 0;
+			}
+			d.TimePoint = pointIndex == 0 ? 1000 : d.Time - data[pointIndex-1].Time;
 
-          elapsedTime += d.TimePoint;
-          d.TimeElapsed = elapsedTime;
+			elapsedTime += d.TimePoint;
+			d.TimeElapsed = elapsedTime;
+			
+			//calc speed with rolling window across multiple data points. sometimes distance is recorded as 0 between points, artifically creating "faster" points
+			var window = 5;
+			var right = Math.min(pointIndex+window,data.length-1);
+			var left = Math.max(pointIndex-window,0);
+			var first = data[left];
+			var last = data[right];
+			var t = d3.sum(data.slice(left,right), function(d){return d.TimePoint; });//last.Time - first.Time;
+			var l = d3.sum(data.slice(left,right), function(d){return d.DistancePoint; });//last.Distance - first.Distance;
+			
 
-          //calc speed with rolling window across multiple data points. sometimes distance is recorded as 0 between points, artifically creating "faster" points
-          var window = 5;
-          var right = Math.min(i+window,data.length-1);
-          var left = Math.max(i-window,0);
-          var first = data[left];
-          var last = data[right];
-          var t = last.Time - first.Time;
-          var l = last.Distance - first.Distance;
+			d.SpeedMS = (l/(t/1000));
+			d.SpeedKH = d.SpeedMS * 3.6;
+			d.SpeedMM = d.SpeedMS * 60;
+			if (d.SpeedMS == 0) {
+				d.PaceSK = 0;
+				d.PaceSM = 0;
+			} else {
+				// do not store as Infinity
+				d.PaceSK = 1000 / d.SpeedMS;
+				d.PaceSM = 1609.344 / d.SpeedMS;
+			}
 
-          d.SpeedMS = (l/(t/1000));
-          d.SpeedKH = d.SpeedMS * 3.6;
-          d.SpeedMM = d.SpeedMS * 60;
-          d.PaceSK = 1000 / d.SpeedMS;
-          d.PaceSM = 1609.344 / d.SpeedMS;
-          
-          if (d.SpeedKH < 1) {
-            d.LapType = "Stationary";
-            d.TimeMoving = movingTime;
-          } else {
-            movingTime += d.TimePoint;
-            d.TimeMoving = movingTime;
+			if (d.SpeedKH > 20) {
+				console.log('High speed value...',d.SpeedKH,d);
+			}
+			
+			
+			if (d.SpeedKH < 1) {
+			d.LapType = "Stationary";
+			d.TimeMoving = movingTime;
+			} else {
+			movingTime += d.TimePoint;
+			d.TimeMoving = movingTime;
 
-			if (a.Length.Type == 'Unknown') {
+			if (activity.Length.Type == 'Unknown') {
 				d.LapType = 'Unknown';
-			} else if (a.Length.Type == 'Training') {
+			} else if (activity.Length.Type == 'Training') {
 			  if (lengthKeys.length == 1) {
 				d.LapType = lengthKeys[0];
 			  } else if (lengthKeys.length == 3) {
 				lengthKeys.forEach(function(k) {
-				  if (d.TimeMoving >= a.Length[k][0] &&
-					  d.TimeMoving <= a.Length[k][1]) {
+				  if (d.TimeMoving >= activity.Length[k][0] &&
+					  d.TimeMoving <= activity.Length[k][1]) {
 					d.LapType = k;
 				  }
 				});
@@ -961,21 +1003,33 @@ d3.csv('/activities.csv', function(activities) {
 				  d.LapType = "Unknown1";
 				}
 			  } 
-			} else if (a.Length.Type == 'Race') {
+			} else if (activity.Length.Type == 'Race') {
 				d.LapType = 'Race';
-			} else if (a.Length.Type == 'Intervals') {
-				if (d.TimeMoving % a._intervalLen < a.Length.Workout) {
+			} else if (activity.Length.Type == 'Intervals') {
+				if (d.TimeMoving % activity._intervalLen < activity.Length.Workout) {
 					d.LapType = 'Workout';
 				} else {
 					d.LapType = 'Rest';
 				}
 			}
-
-          data_toload.push(d);
-        }
-      }
-    }
-    
-    load_complete = true;
-  });
+			}
+			
+			
+			data_toload.push(d);
+			
+		  pointIndex++;
+	  }
+	  
+	  
+	  activity_done++;
+	  
+	  if (activity_done == total) {
+		load_complete = true;
+	  }
+	});
+	
+	
+	
+  }
+  
 });
