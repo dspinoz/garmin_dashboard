@@ -43,6 +43,32 @@ function data_speedZone(d) {
 	return 7;
 }
 
+
+function data_timeZoneDescription(i) {
+	switch(i){
+		case 0: return "0-5";
+		case 1: return "5-10";
+		case 2: return "10-15";
+		case 3: return "15-20";
+		case 4: return "20-25";
+		case 5: return "25-30";
+		case 6: return "30-35";
+		case 7: return ">35";
+		default: "Unknown";
+	}
+}
+
+function data_timeZone(d) {
+	if (d.TimeMoving < (5*60*1000)) return 0;
+	if (d.TimeMoving < (10*60*1000)) return 1;
+	if (d.TimeMoving < (15*60*1000)) return 2;
+	if (d.TimeMoving < (20*60*1000)) return 3;
+	if (d.TimeMoving < (25*60*1000)) return 4;
+	if (d.TimeMoving < (30*60*1000)) return 5;
+	if (d.TimeMoving < (35*60*1000)) return 6;
+	return 7;
+}
+
 function is_stationary(d) {
 	return d.LapType == "Stationary";
 }
@@ -483,7 +509,7 @@ chartActivitySummaryTable
   })
   .group(function(d) { return "Activities"; })
   .columns([
-    function(d) { console.log('activity',d);
+    function(d) {
 	if (d.value.size())
 		return '<span title="'+d.value.entries()[0].value.ActivityStart+'">'+d.key+'</span> '+ "<small>"+d.value.size()+"</small>";
 	else
@@ -637,6 +663,63 @@ summaryPanel_create('year',d3.time.year);
 summaryPanel_create('month',d3.time.month);
 summaryPanel_create('week',d3.time.week);
 summaryPanel_create('day',d3.time.day);
+
+
+
+
+
+var chartTimeTable = interactive_dataTable(dc.dataTable("#chart-time-table"));
+var chartTimeColors = colorbrewer.Blues[8];
+var timeZoneDim = facts.dimension(function(d) { return data_timeZone(d); });
+var timeCountGroup = group_reduceCountKey(timeZoneDim.group(), function(d){return d.File; });
+
+chartTimeTable
+  .dimension({
+      filter: function(f) {
+        timeZoneDim.filter(f);
+      },
+      filterExact: function(v) {
+        timeZoneDim.filterExact(v);
+      },
+      filterFunction: function(f) {
+        timeZoneDim.filterFunction(f);
+      },
+      filterRange: function(r) {
+        timeZoneDim.filterRange(r);
+      },
+      bottom: function(sz) {
+		var allzones = d3.map({
+			0:{html:'<span>'+data_timeZoneDescription(0)+'</span>',value:d3.map()},
+			1:{html:'<span>'+data_timeZoneDescription(1)+'</span>',value:d3.map()},
+			2:{html:'<span>'+data_timeZoneDescription(2)+'</span>',value:d3.map()},
+			3:{html:'<span>'+data_timeZoneDescription(3)+'</span>',value:d3.map()},
+			4:{html:'<span>'+data_timeZoneDescription(4)+'</span>',value:d3.map()},
+			5:{html:'<span>'+data_timeZoneDescription(5)+'</span>',value:d3.map()},
+			6:{html:'<span>'+data_timeZoneDescription(6)+'</span>',value:d3.map()},
+			7:{html:'<span>'+data_timeZoneDescription(7)+'</span>',value:d3.map()}
+		});
+		
+        timeCountGroup.all().forEach(function(d) {
+			d.value.entries().forEach(function(e) {
+				allzones.get(d.key).value.set(e.key,e.value);
+			});
+		});
+		allzones.entries().forEach(function(d) {
+			d.value['color'] = chartTimeColors[d.key];
+		});
+        return allzones.entries();
+      }
+  })
+  .group(function(d) { return "Activities"; })
+  .columns([
+    function(d) { return '<svg height=20 width=20><rect width="20" height="20" stroke="'+d.value.color+'" '+(d.value.value.size() == 0 ? 'fill-opacity="0.3"' : '')+' fill="'+d.value.color+'"></rect></svg>'; },
+    function(d) { return d.value.html; },
+    function(d) { return "<span class=\"badge\">"+d.value.value.size()+"</span>"; },
+    function(d) { return "<small>"+d3.sum(d.value.value.entries(),function(d){return d.value; })+"</small>"; }
+  ]);
+
+
+
 
 
 
