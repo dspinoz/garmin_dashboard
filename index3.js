@@ -100,7 +100,12 @@ function interactive_dataTable(thechart) {
         });
       })
       .classed('success',function(d) { return chart.filters().filter(function(f){return f==d.key; }).length > 0; })
-      .classed('active',function(d){ return chart.hasFilter() == 0 ? false : chart.filters().filter(function(f){return f!=d.key; }).length > 0; });
+      .classed('active',function(d){ return chart.hasFilter() == 0 ? false : chart.filters().filter(function(f){return f!=d.key; }).length > 0; })
+	  .each(function(d) {
+		  d3.select(this.parentNode/*tbody*/.parentNode/*table*/.parentNode/*panel-body*/.parentNode)
+		  .classed('panel-success',function() { return chart.hasFilter() ? false : true })
+		  .classed('panel-default',function(){ return chart.hasFilter() ? true : false});
+	  });
   });
 }
 
