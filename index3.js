@@ -306,7 +306,7 @@ var chartTotalDistance = dc.numberDisplay("#chart-total-distance");
 chartTotalDistance
   .group(facts.groupAll().reduceSum(function(d) { return d.DistancePoint; }))
   .formatNumber(function(d) {
-    return d3.round(d / 1000,2) + "<small>km</small>";
+    return d3.round(d / 1000,2);
   })
   .valueAccessor(function(d) { return d; });
 
