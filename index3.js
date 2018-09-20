@@ -412,7 +412,7 @@ chartActivityTable
       },
       bottom: function(sz) {
         var gdata = activityCountGroup.all();
-        return gdata;
+        return gdata.filter(function(d,i) { return d.value.size(); });;
       }
   })
   .group(function(d) { return "Activities"; })
@@ -441,7 +441,7 @@ chartLapTypeTable
       },
       bottom: function(sz) {
         var gdata = lapTypeCountGroup.all();
-        return gdata;
+        return gdata.filter(function(d,i) { return d.value.size(); });;
       }
   })
   .group(function(d) { return "Lap Type"; })
@@ -471,7 +471,7 @@ chartDeviceTable
       },
       bottom: function(sz) {
         var gdata = deviceCountGroup.all();
-        return gdata;
+        return gdata.filter(function(d,i) { return d.value.size(); });
       }
   })
   .group(function(d) { return "Activities"; })
@@ -509,7 +509,7 @@ chartActivitySummaryTable
       },
       bottom: function(sz) {
         var gdata = activitySummaryGroup.all();
-        return gdata;
+        return gdata.filter(function(d,i) { return d.value.size(); });
       }
   })
   .group(function(d) { return "Activities"; })
