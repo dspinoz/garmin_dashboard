@@ -134,9 +134,11 @@ var deviceDim = facts.dimension(function(d) { return d.Device; });
 var hrZoneDim = facts.dimension(function(d) { return data_hrZone(d); });
 
 
-function group_get_length(group) {
+function group_get_length(group,filter) {
   return {
     all:function () {
+      if (filter)
+        return [group.all().filter(filter).length];
       return [group.all().length];
     }
   };
@@ -290,7 +292,7 @@ function group_reduceMappedValue(group,keyFunc,valueFunc) {
 
 var chartTotalDistance = dc.numberDisplay("#chart-total-activities");
 chartTotalDistance
-  .group(group_get_length(fileDim.group().reduceCount()))
+  .group(group_get_length(fileDim.group().reduceCount(), function(d){ return d.value; }))
   .formatNumber(d3.round)
   .valueAccessor(function(d) { return d; });
   
