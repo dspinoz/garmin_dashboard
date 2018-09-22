@@ -68,6 +68,16 @@ function data_timeZone(d) {
 	if (d.TimeMoving < (35*60*1000)) return 6;
 	return 7;
 }
+function data_timeZone2(d) {
+	if (d < (5*60*1000)) return 0;
+	if (d < (10*60*1000)) return 1;
+	if (d < (15*60*1000)) return 2;
+	if (d < (20*60*1000)) return 3;
+	if (d < (25*60*1000)) return 4;
+	if (d < (30*60*1000)) return 5;
+	if (d < (35*60*1000)) return 6;
+	return 7;
+}
 
 function is_stationary(d) {
 	return d.LapType == "Stationary";
@@ -674,7 +684,8 @@ summaryPanel_create('day',d3.time.day);
 
 
 
-
+// the time zones are based on the currently available data (non-filtered)
+// TODO a custom group/dimension allows the dimension to be recalculated?
 var chartTimeTable = interactive_dataTable(dc.dataTable("#chart-time-table"));
 var chartTimeColors = colorbrewer.Blues[8];
 var timeZoneDim = facts.dimension(function(d) { return data_timeZone(d); });
@@ -696,33 +707,58 @@ chartTimeTable
       },
       bottom: function(sz) {
 		var allzones = d3.map({
-			0:{html:'<span>'+data_timeZoneDescription(0)+'</span>',value:d3.map()},
-			1:{html:'<span>'+data_timeZoneDescription(1)+'</span>',value:d3.map()},
-			2:{html:'<span>'+data_timeZoneDescription(2)+'</span>',value:d3.map()},
-			3:{html:'<span>'+data_timeZoneDescription(3)+'</span>',value:d3.map()},
-			4:{html:'<span>'+data_timeZoneDescription(4)+'</span>',value:d3.map()},
-			5:{html:'<span>'+data_timeZoneDescription(5)+'</span>',value:d3.map()},
-			6:{html:'<span>'+data_timeZoneDescription(6)+'</span>',value:d3.map()},
-			7:{html:'<span>'+data_timeZoneDescription(7)+'</span>',value:d3.map()}
+			0:{html:'<span>'+data_timeZoneDescription(0)+'</span>',value:d3.map(),points:[]},
+			1:{html:'<span>'+data_timeZoneDescription(1)+'</span>',value:d3.map(),points:[]},
+			2:{html:'<span>'+data_timeZoneDescription(2)+'</span>',value:d3.map(),points:[]},
+			3:{html:'<span>'+data_timeZoneDescription(3)+'</span>',value:d3.map(),points:[]},
+			4:{html:'<span>'+data_timeZoneDescription(4)+'</span>',value:d3.map(),points:[]},
+			5:{html:'<span>'+data_timeZoneDescription(5)+'</span>',value:d3.map(),points:[]},
+			6:{html:'<span>'+data_timeZoneDescription(6)+'</span>',value:d3.map(),points:[]},
+			7:{html:'<span>'+data_timeZoneDescription(7)+'</span>',value:d3.map(),points:[]}
 		});
-		
-        timeCountGroup.all().forEach(function(d) {
-			d.value.entries().forEach(function(e) {
-				allzones.get(d.key).value.set(e.key,e.value);
-			});
-		});
-		allzones.entries().forEach(function(d) {
-			d.value['color'] = chartTimeColors[d.key];
-		});
+    
+    
+    
+    var all = facts.allFiltered();
+    
+    var peractivity = d3.nest()
+      .key(function(d){return d.File; })
+      .rollup(function(values){
+        var sorted = values.sort(function(a,b){return d3.ascending(a.TimeMoving,b.TimeMoving); });
+        
+        var first = sorted[0];
+        
+        var pertimezone = d3.nest()
+          .key(function(d){ return data_timeZone2(d.TimeMoving - first.TimeMoving); })
+          .entries(sorted);
+        
+        return pertimezone;
+      })
+      .entries(all);
+    
+    peractivity.forEach(function(d) {
+      var activity = d.key;
+      var zones = d.values;
+      
+      zones.forEach(function(e) {
+        var zone = e.key;
+        var datapoints = e.values;
+        
+        datapoints.forEach(function(p) {
+          allzones.get(zone).points.push(p);
+        });
+      });
+    });
+    
         return allzones.entries();
       }
   })
   .group(function(d) { return "Activities"; })
   .columns([
-    function(d) { return '<svg height=20 width=20><rect width="20" height="20" stroke="'+d.value.color+'" '+(d.value.value.size() == 0 ? 'fill-opacity="0.3"' : '')+' fill="'+d.value.color+'"></rect></svg>'; },
+    function(d) { return '<svg height=20 width=20><rect width="20" height="20" stroke="'+chartTimeColors[d.key]+'" '+(d.value.points.length == 0 ? 'fill-opacity="0.3"' : '')+' fill="'+chartTimeColors[d.key]+'"></rect></svg>'; },
     function(d) { return d.value.html; },
-    function(d) { return "<span class=\"badge\">"+d.value.value.size()+"</span>"; },
-    function(d) { return "<small>"+d3.sum(d.value.value.entries(),function(d){return d.value; })+"</small>"; }
+    function(d) { return "<span class=\"badge\">"+d3.nest().key(function(d){return d.File; }).entries(d.value.points).length+"</span>"; },
+    function(d) { return "<small>"+d.value.points.length+"</small>"; }
   ]);
 
 
