@@ -688,8 +688,7 @@ summaryPanel_create('day',d3.time.day);
 // TODO a custom group/dimension allows the dimension to be recalculated?
 var chartTimeTable = interactive_dataTable(dc.dataTable("#chart-time-table"));
 var chartTimeColors = colorbrewer.Blues[8];
-var timeZoneDim = facts.dimension(function(d) { return data_timeZone(d); });
-var timeCountGroup = group_reduceCountKey(timeZoneDim.group(), function(d){return d.File; });
+var timeZoneDim = facts.dimension(function(d) { return d.TimeZone; });
 
 chartTimeTable
   .dimension({
@@ -717,6 +716,12 @@ chartTimeTable
 			7:{html:'<span>'+data_timeZoneDescription(7)+'</span>',value:d3.map(),points:[]}
 		});
     
+    //reset the time zone
+    timeZoneDim.dispose();
+    timeZoneDim = undefined;
+    facts.all().forEach(function(d) {
+     d.TimeZone = -1;
+    });
     
     
     var all = facts.allFiltered();
@@ -737,7 +742,7 @@ chartTimeTable
       .entries(all);
     
     peractivity.forEach(function(d) {
-      var activity = d.key;
+      var file = d.key;
       var zones = d.values;
       
       zones.forEach(function(e) {
@@ -746,10 +751,21 @@ chartTimeTable
         
         datapoints.forEach(function(p) {
           allzones.get(zone).points.push(p);
+          //TODO horribly inefficient!?
+          //find the real matching fact and set its zone
+          facts.all().filter(function(f){
+            return f.File === p.File &&
+              f.PointIndex === p.PointIndex;
+          }).forEach(function(d) {
+            d.TimeZone = zone;
+          });
+
         });
       });
     });
     
+    timeZoneDim = facts.dimension(function(d) { return d.TimeZone; });
+
         return allzones.entries();
       }
   })
@@ -1064,6 +1080,7 @@ d3.csv('/activities.csv', function(activities) {
 			}
 			
 			d.PointIndex = pointIndex;
+                        d.TimeZone = -1; // calculated
 			d.Activity = activity.Name;
 			d.File = activity.File;
 			d.Device = activity.Device;
