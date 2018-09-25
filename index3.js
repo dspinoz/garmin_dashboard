@@ -740,6 +740,8 @@ chartTimeTable
         return pertimezone;
       })
       .entries(all);
+
+   var mappp = {};
     
     peractivity.forEach(function(d) {
       var file = d.key;
@@ -751,18 +753,20 @@ chartTimeTable
         
         datapoints.forEach(function(p) {
           allzones.get(zone).points.push(p);
+          // keep track of points and their new zone
+          if (!(file in mappp)) mappp[file] = {};
+          mappp[file][p.PointIndex] = zone;
+
           //TODO horribly inefficient!?
           //find the real matching fact and set its zone
-          facts.all().filter(function(f){
-            return f.File === p.File &&
-              f.PointIndex === p.PointIndex;
-          }).forEach(function(d) {
-            d.TimeZone = zone;
-          });
-
         });
       });
     });
+          facts.all()
+          .forEach(function(d) {
+            if (d.File in mappp && d.PointIndex in mappp[d.File])
+              d.TimeZone = mappp[d.File][d.PointIndex];
+          });
     
     timeZoneDim = facts.dimension(function(d) { return d.TimeZone; });
 
