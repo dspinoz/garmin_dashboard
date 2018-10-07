@@ -535,11 +535,8 @@ chartActivitySummaryTable
 	else
 		return '<span>'+d.key+'</span>';
 	},
-    function(d) { 
-		var runTime = formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.TimePoint;})/1000,false);
-		var runDistance = d3.round(d3.sum(d.value.entries(), function(e){return e.value.DistancePoint;})/1000,2);
-		return runTime + " / " + runDistance;
-	},
+    function(d) { return formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.TimePoint;})/1000,false); },
+    function(d) {  return d3.round(d3.sum(d.value.entries(), function(e){return e.value.DistancePoint;})/1000,2); },
     function(d) { 
       //calculate Pace with available data
       var runTime = d3.sum(d.value.entries(), function(e){return e.value.TimePoint;})/1000;
