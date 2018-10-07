@@ -498,7 +498,10 @@ chartDeviceTable
 
 
 
-
+function PaceSK(d){
+  if (d.SpeedMS == 0) return 0; //do not store as Infinity
+  return 1000/d.SpeedMS;
+}
 
 
 var chartActivitySummaryTable = interactive_dataTable(dc.dataTable("#chart-activity-summary-table"));
@@ -537,7 +540,13 @@ chartActivitySummaryTable
 		var runDistance = d3.round(d3.sum(d.value.entries(), function(e){return e.value.DistancePoint;})/1000,2);
 		return runTime + " / " + runDistance;
 	},
-    function(d) { return formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.PaceSK;})/d.value.size(),false); },
+    function(d) { 
+      //calculate Pace with available data
+      var runTime = d3.sum(d.value.entries(), function(e){return e.value.TimePoint;})/1000;
+      var runDistance = d3.round(d3.sum(d.value.entries(), function(e){return e.value.DistancePoint;})/1000,2);
+      var Pace= formatSeconds(runTime/runDistance,false);
+      return Pace;
+    },
     function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.SpeedKH;})/d.value.size(),2); },
     function(d) { return d3.round(d3.sum(d.value.entries(), function(e){return e.value.SpeedMM})/d.value.size(),2); },
 
