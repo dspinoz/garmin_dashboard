@@ -907,7 +907,75 @@ chartHRZoneTable
 
 
 
+function draw_map() {
+  
+  
+var width = 950,
+    height = 550,
+    scale0 = (width - 1) / 2 / Math.PI;
+console.log('SCALE 0',scale0);
+    
+function zoomed() {
+  projection
+      .translate(zoom.translate())
+      .scale(zoom.scale());
+  console.log('zoom',projection.scale(),projection.translate());
 
+  d3.select("#chart-map").select('svg').select("g").selectAll('circle').each(function(d) {
+    d3.select(this)
+    .attr("cx", function (d) { return projection(d)[0]; })
+    .attr("cy", function (d) { return projection(d)[1]; });
+  });
+}
+
+var zoom = d3.behavior.zoom()
+    .translate([width / 2, height / 2])
+    .scale(1000)
+    .scaleExtent([100000, 1000000])
+    .on("zoom", zoomed);
+    
+// set projection
+var projection = d3.geo.mercator()
+      .scale(100000)
+      .center([138.6137772537768, -34.81516915373504])
+      .translate([width / 2, height / 2]);
+
+// create path variable
+var path = d3.geo.path()
+    .projection(projection);
+    
+// create svg variable
+var svg = d3.select("#chart-map").selectAll('svg').data([1]);
+
+svg.exit().remove();
+svg.enter().append("svg")
+    .call(zoom)
+    .call(zoom.event);
+svg
+  .attr("width", width)
+  .attr("height", height);
+  
+var g = svg.selectAll('g').data([1]);
+g.exit().remove();
+g.enter().append('g');
+    
+// points
+var points = facts.allFiltered().map(function(d) { return [+d['Position Lon'],+d['Position Lat']]; }).splice(3000,100);
+
+// add circles to svg
+var circle = g.selectAll("circle").data(points);
+
+circle.exit().remove();
+
+circle.enter().append("circle")
+  .attr("r", "3px").attr('class','map');
+
+circle
+.attr("cx", function (d) { console.log(d,projection(d),this); return projection(d)[0]; })
+.attr("cy", function (d) { return projection(d)[1]; });
+    
+  
+}
 
 
 
@@ -922,6 +990,8 @@ function redraw() {
     }
     //TODO refreshDataTable();
     redraw_count++;
+    
+    draw_map();
   }
 }
 
@@ -951,6 +1021,8 @@ function load_data() {
   var toadd = data_toload.splice(0,Math.min(load_count,data_toload.length));
   
   data_toload_complete += toadd.length;
+  
+  console.log('facts',toadd);
   
   facts.add(toadd);
   d3.select('.progress-bar').classed('progress-bar-success', true).style('width', ((data_toload_complete/data_toload_total)*100)+'%');
