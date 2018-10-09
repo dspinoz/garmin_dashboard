@@ -530,11 +530,13 @@ chartActivitySummaryTable
   .group(function(d) { return "Activities"; })
   .columns([
     function(d) {
-	if (d.value.size())
-		return '<span title="'+d.value.entries()[0].value.ActivityStart+'">'+d.key+'</span> '+ "<small>"+d.value.size()+"</small>";
-	else
-		return '<span>'+d.key+'</span>';
-	},
+      if (d.value.size()) {
+        var svg = '<svg height=20 width=20><rect width="20" height="20" stroke="'+d.value.entries()[0].value.Color+'" fill="'+d.value.entries()[0].value.Color+'"></rect></svg>';
+        return svg + ' <span title="'+d.value.entries()[0].value.ActivityStart+'">'+d.key+'</span> '+ "<small>"+d.value.size()+"</small>";
+      } else {
+        return '<span>'+d.key+'</span>';
+      }
+    },
     function(d) { return formatSeconds(d3.sum(d.value.entries(), function(e){return e.value.TimePoint;})/1000,false); },
     function(d) {  return d3.round(d3.sum(d.value.entries(), function(e){return e.value.DistancePoint;})/1000,2); },
     function(d) { 
@@ -922,7 +924,8 @@ function zoomed() {
   d3.select("#chart-map").select('svg').select("g").selectAll('circle').each(function(d) {
     d3.select(this)
     .attr("cx", function (d) { return projection(d)[0]; })
-    .attr("cy", function (d) { return projection(d)[1]; });
+    .attr("cy", function (d) { return projection(d)[1]; })
+    .style('fill', function(d){return d.color; });
   });
 }
 
@@ -958,7 +961,7 @@ g.exit().remove();
 g.enter().append('g');
     
 // points
-var points = facts.allFiltered().map(function(d) { return [+d['Position Lon'],+d['Position Lat']]; });
+var points = facts.allFiltered().map(function(d) { return {color: d.Color, pos:[+d['Position Lon'],+d['Position Lat']]}; });
 
 // add circles to svg
 var circle = g.selectAll("circle").data(points);
@@ -971,8 +974,9 @@ circle.enter().append("circle")
 circle
 .attr("cx", function (d) { 
   //console.log(d,projection(d),this); 
-  return projection(d)[0]; })
-.attr("cy", function (d) { return projection(d)[1]; });
+  return projection(d.pos)[0]; })
+.attr("cy", function (d) { return projection(d.pos)[1]; })
+.style('fill', function(d){return d.color; });
     
   
 }
@@ -1165,6 +1169,7 @@ d3.csv('/activities.csv', function(activities) {
                         d.TimeZone = -1; // calculated
 			d.Activity = activity.Name;
 			d.File = activity.File;
+      d.Color = filenameColors(activity.File);
 			d.Device = activity.Device;
 			d.ActivityLength = activity.Length;
 			d.ActivityStart = activityStart;
