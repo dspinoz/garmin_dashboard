@@ -911,9 +911,7 @@ function draw_map() {
   
   
 var width = 950,
-    height = 550,
-    scale0 = (width - 1) / 2 / Math.PI;
-console.log('SCALE 0',scale0);
+    height = 550;
     
 function zoomed() {
   projection
@@ -930,13 +928,13 @@ function zoomed() {
 
 var zoom = d3.behavior.zoom()
     .translate([width / 2, height / 2])
-    .scale(1000)
-    .scaleExtent([100000, 1000000])
+    .scale(1500000)
+    .scaleExtent([100000, 1500000])
     .on("zoom", zoomed);
     
 // set projection
 var projection = d3.geo.mercator()
-      .scale(100000)
+      .scale(1500000)
       .center([138.6137772537768, -34.81516915373504])
       .translate([width / 2, height / 2]);
 
@@ -960,7 +958,7 @@ g.exit().remove();
 g.enter().append('g');
     
 // points
-var points = facts.allFiltered().map(function(d) { return [+d['Position Lon'],+d['Position Lat']]; }).splice(3000,100);
+var points = facts.allFiltered().map(function(d) { return [+d['Position Lon'],+d['Position Lat']]; });
 
 // add circles to svg
 var circle = g.selectAll("circle").data(points);
@@ -971,7 +969,9 @@ circle.enter().append("circle")
   .attr("r", "3px").attr('class','map');
 
 circle
-.attr("cx", function (d) { console.log(d,projection(d),this); return projection(d)[0]; })
+.attr("cx", function (d) { 
+  //console.log(d,projection(d),this); 
+  return projection(d)[0]; })
 .attr("cy", function (d) { return projection(d)[1]; });
     
   
