@@ -925,8 +925,8 @@ dc.mapChart = function (parent, chartGroup) {
 
     _G.selectAll('circle').each(function(d) {
       d3.select(this)
-      .attr("cx", function (d) { return _projection(d)[0]; })
-      .attr("cy", function (d) { return _projection(d)[1]; })
+      .attr("cx", function (d) { return _projection(d.pos)[0]; })
+      .attr("cy", function (d) { return _projection(d.pos)[1]; })
       .style('fill', function(d){return d.color; });
     });
   }
