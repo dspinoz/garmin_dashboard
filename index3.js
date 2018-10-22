@@ -914,8 +914,12 @@ dc.mapChart = function (parent, chartGroup) {
   var _width, _height;
   var _projection, _zoom, _path;
   
-  var _lonAccessor = function(d) { return d['Position Lon']; };
-  var _latAccessor = function(d) { return d['Position Lat']; };
+  var _lonAccessor = function(d) { return d[0]; };
+  var _latAccessor = function(d) { return d[1]; };
+  
+  var _initialScale = 1500000,
+      _scaleExtent = [100000, 2000000],
+      _mapCenter = [138.6137772537768, -34.81516915373504];
   
   function _zoomed() {
     _projection
@@ -939,14 +943,14 @@ dc.mapChart = function (parent, chartGroup) {
     _height = _chart.height() - _chart.margins().top - _chart.margins().bottom;
     
     _projection = d3.geo.mercator()
-      .scale(1500000)
-      .center([138.6137772537768, -34.81516915373504])
+      .scale(_initialScale)
+      .center(_mapCenter)
       .translate([_width / 2, _height / 2]);
     
     _zoom = d3.behavior.zoom()
       .translate([_width / 2, _height / 2])
-      .scale(1500000)
-      .scaleExtent([100000, 1500000])
+      .scale(_initialScale)
+      .scaleExtent(_scaleExtent)
       .on("zoom", _zoomed);
         
     _path = d3.geo.path()
@@ -973,7 +977,7 @@ dc.mapChart = function (parent, chartGroup) {
     //var data = _chart.group().all();
     
     // points
-    var points = facts.allFiltered().map(function(d) { return {color: d.Color, pos:[+_lonAccessor(d),+_latAccessor(d)]}; });
+    var points = facts.allFiltered().map(function(d,i) { return {color: _chart.getColor(d,i), pos:[+_lonAccessor(d),+_latAccessor(d)]}; });
 
     // add circles to svg
     var circle = _G.selectAll("circle").data(points);
@@ -1007,13 +1011,42 @@ dc.mapChart = function (parent, chartGroup) {
     return _chart;
   };
   
+  _chart.initialScale = function (v) {
+    if (!arguments.length) {
+      return _initialScale;
+    }
+    _initialScale = v;
+    return _chart;
+  };
+  
+  _chart.scaleExtent = function (v) {
+    if (!arguments.length) {
+      return _scaleExtent;
+    }
+    _scaleExtent = v;
+    return _chart;
+  };
+  
+  _chart.mapCenter = function (v) {
+    if (!arguments.length) {
+      return _mapCenter;
+    }
+    _mapCenter = v;
+    return _chart;
+  };
+  
   return _chart.anchor(parent, chartGroup);
 };
 
 
 var chartMap = dc.mapChart("#chart-map");
 
-chartMap.dimension(fileDim);
+chartMap.dimension(fileDim)
+  .longitudeAccessor(function(d) { return d['Position Lon']; })
+  .latitudeAccessor(function(d) { return d['Position Lat']; })
+  .colorAccessor(function(d) { return d.File; })
+  .colors(filenameColors)
+  .scaleExtent([50000, 10000000]);
 
 
 
