@@ -1226,6 +1226,32 @@ dc.monthViewChart = function (parent, chartGroup) {
       .text(function(d) {
         return _dayNumFormat(d);
       });
+	  
+	  
+      // set the styles, note that order is important!
+      _G.selectAll('circle.cal').style({
+        fill: '#fff'
+      });
+      
+      _G.selectAll('circle.cal.in-month').style({
+        fill: '#fff'
+      });
+
+      _G.selectAll('circle.cal.current').style({
+        fill: '#000'
+      });
+
+      _G.selectAll('text.cal').style({
+        fill: '#ccc'
+      });
+      
+      _G.selectAll('text.cal.in-month').style({
+        fill: '#000'
+       });
+      
+      _G.selectAll('text.cal.current').style({
+        fill: '#fff'
+      });
     };
   
   _chart.date = function (v) {
