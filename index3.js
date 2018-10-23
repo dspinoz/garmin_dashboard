@@ -914,6 +914,7 @@ dc.mapChart = function (parent, chartGroup) {
   var _width, _height;
   var _projection, _zoom, _path;
   var _graticule;
+  var _canvas, _inMemoryDom;
   
   var _lonAccessor = function(d) { return d[0]; };
   var _latAccessor = function(d) { return d[1]; };
@@ -923,6 +924,7 @@ dc.mapChart = function (parent, chartGroup) {
       _mapCenter = [138.6137772537768, -34.81516915373504];
   
   var _showGraticule = false,
+      _useCanvas = false,
       _graticuleStep = [10, 10];
   
   function _zoomed() {
@@ -930,11 +932,21 @@ dc.mapChart = function (parent, chartGroup) {
       .translate(_zoom.translate())
       .scale(_zoom.scale());
     console.log('zoom',_projection.scale(),_projection.translate());
+	
+	var sel;
+	
+    if (_chart.useCanvas()) {
+		sel = _G.selectAll('custom.circle')
+	} else {
+		sel = _G.select('g.points').selectAll('circle')
+	}
+	
 
-    _G.select('g.points').selectAll('circle').each(function(d) {
+    sel.each(function(d) {
       d3.select(this)
       .attr("cx", function (d) { return _projection(d.pos)[0]; })
       .attr("cy", function (d) { return _projection(d.pos)[1]; })
+      .attr('color', function(d){ return d.color; })
       .style('fill', function(d){return d.color; });
     });
   
@@ -943,6 +955,8 @@ dc.mapChart = function (parent, chartGroup) {
       d3.select(this).attr('d', _path);
     });
   }
+  
+    drawCanvas();
   }
     
   _chart._doRender = function () {
@@ -966,27 +980,68 @@ dc.mapChart = function (parent, chartGroup) {
     _path = d3.geo.path()
       .projection(_projection);
 
-    _G = _chart.svg()
+    if (_chart.useCanvas()) {
+      _inMemoryDom = document.createElement("custom");
+      _G = d3.select(_inMemoryDom);
+      _chart.svg().remove();
+      _canvas = _chart.root().append('canvas').attr('width', _width).attr('height',_height);
+    
+      _canvas
+        .call(_zoom)
+        .call(_zoom.event);
+      
+      //TODO showGraticule
+    } else {
+      _G = _chart.svg()
         .attr("width", _width + _chart.margins().right + _chart.margins().left)
         .attr("height", _height + _chart.margins().top + _chart.margins().bottom)
       .append("g")
         .attr("transform", "translate(" + _chart.margins().left + "," + _chart.margins().top + ")");
+      
+      _G.append('g').classed('points',true);
     
-    _chart.svg()
+      _chart.svg()
         .call(_zoom)
         .call(_zoom.event);
     
-    _G.append('g').classed('points',true);
-    
-    if (_chart.showGraticule()) {
-      _graticule = d3.geo.graticule().step(_graticuleStep);
-      _G.append('g').classed('graticule',true);
+      if (_chart.showGraticule()) {
+        _graticule = d3.geo.graticule().step(_graticuleStep);
+        _G.append('g').classed('graticule',true);
+      }
     }
     
     _chart.redraw();
     
     return _chart;
   };
+  
+  function drawCanvas() {
+    if (!_chart.useCanvas()) return;
+	
+	var context = _canvas.node().getContext("2d");
+	
+    // clear canvas
+	context.globalAlpha = 1;
+    context.fillStyle = "#fff";
+    context.rect(0,0,_width,_height);
+    context.fill();
+	
+	context.globalAlpha = 0.1;
+	
+	_G.selectAll('custom.circle').each(function(d) {
+		var n = d3.select(this);
+		context.beginPath();
+		context.arc(n.attr('cx'), n.attr('cy'), n.attr('r'), 0, 2* Math.PI);
+		context.strokeStyle = n.attr('color')
+		context.stroke();
+		context.fillStyle = n.attr('color');
+		context.fill();
+	});
+	
+	if (_chart.showGraticule()) {
+		//TODO show graticule
+	}
+  }
 
   _chart._doRedraw = function () {
   
@@ -996,26 +1051,39 @@ dc.mapChart = function (parent, chartGroup) {
     // points
     var points = facts.allFiltered().map(function(d,i) { return {color: _chart.getColor(d,i), pos:[+_lonAccessor(d),+_latAccessor(d)]}; });
 
-    // add circles to svg
-    var circle = _G.select('g.points').selectAll("circle").data(points);
+    // add circles to map
+    var circle;
+
+    if (_chart.useCanvas()) {
+      circle = _G.selectAll('custom.circle').data(points);
+    } else {
+      circle = _G.select('g.points').selectAll("circle").data(points);
+    }
 
     circle.exit().remove();
 
-    circle.enter().append("circle")
-      .attr("r", "3px").attr('class','map');
+    if (_chart.useCanvas()) {
+      circle.enter().append('custom').classed('circle',true)
+        .attr("r", "3");
+    } else {
+      circle.enter().append("circle")
+        .attr("r", "3px").attr('class','map');
+    }
 
     circle
     .attr("cx", function (d) { return _projection(d.pos)[0]; })
     .attr("cy", function (d) { return _projection(d.pos)[1]; })
+    .attr('color', function(d){ return d.color; })
     .style('fill', function(d){return d.color; });
     
-    if (_chart.showGraticule()) {
+    if (_chart.showGraticule() && !_chart.useCanvas()) {
       var lines = _G.select('g.graticule').selectAll('path.graticule').data([_graticule()]);
-      
       lines.exit().remove();
       lines.enter().append('path').classed('graticule',true);
       lines.attr('d', _path);
     }
+    
+    drawCanvas();
     
     return _chart;
   };
@@ -1076,6 +1144,14 @@ dc.mapChart = function (parent, chartGroup) {
     return _chart;
   };
   
+  _chart.useCanvas = function (v) {
+    if (!arguments.length) {
+      return _useCanvas;
+    }
+    _useCanvas = v;
+    return _chart;
+  };
+  
   return _chart.anchor(parent, chartGroup);
 };
 
@@ -1087,6 +1163,7 @@ chartMap.dimension(fileDim)
   .latitudeAccessor(function(d) { return d['Position Lat']; })
   .colorAccessor(function(d) { return d.File; })
   .colors(filenameColors)
+  .useCanvas(true)
   .scaleExtent([50000, 10000000]);
 
 
