@@ -1164,7 +1164,7 @@ chartMap.dimension(fileDim)
   .colorAccessor(function(d) { return d.File; })
   .colors(filenameColors)
   .useCanvas(true)
-  .scaleExtent([50000, 10000000]);
+  .scaleExtent([50000, 100000000]);
 
 
 
