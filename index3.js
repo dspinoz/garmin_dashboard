@@ -1105,7 +1105,8 @@ dc.monthViewChart = function (parent, chartGroup) {
       _monthFormat = d3.time.format('%B'),
       _dayNumFormat = d3.time.format('%e');
 	  
-  var _hoverFunc = function(d,i) {};
+  var _hoverFunc = function(d,i) {},
+      _startDay = d3.time.monday;
     
   _chart._doRender = function () {
     _chart.resetSvg();
@@ -1137,19 +1138,19 @@ dc.monthViewChart = function (parent, chartGroup) {
 
       var g = _G.selectAll('g')
         .data(function() {
-          var start = d3.time.sunday.floor(_chart.date());
+          var start = _startDay.floor(_chart.date());
           
           while (_chart.date().getMonth() == start.getMonth() && 
                  start.getDate() != 0) {
-            start = d3.time.sunday.floor(new Date(start.getTime() - (24*60*60*1000)));
+            start = _startDay.floor(new Date(start.getTime() - (24*60*60*1000)));
           }
           
-          var end = d3.time.sunday.ceil(new Date(_chart.date().getFullYear(), _chart.date().getMonth()+1, 0));
+          var end = _startDay.ceil(new Date(_chart.date().getFullYear(), _chart.date().getMonth()+1, 0));
           
           var days = d3.time.days(start, end);
 
           while (days.length < 42) {
-            end = d3.time.sunday.ceil(new Date(end.getTime() + (24*60*60*1000)));
+            end = _startDay.ceil(new Date(end.getTime() + (24*60*60*1000)));
             days = d3.time.days(start, end);
           }
           
