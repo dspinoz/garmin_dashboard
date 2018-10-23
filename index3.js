@@ -913,6 +913,7 @@ dc.mapChart = function (parent, chartGroup) {
   var _G;
   var _width, _height;
   var _projection, _zoom, _path;
+  var _graticule;
   
   var _lonAccessor = function(d) { return d[0]; };
   var _latAccessor = function(d) { return d[1]; };
@@ -921,18 +922,27 @@ dc.mapChart = function (parent, chartGroup) {
       _scaleExtent = [100000, 2000000],
       _mapCenter = [138.6137772537768, -34.81516915373504];
   
+  var _showGraticule = false,
+      _graticuleStep = [10, 10];
+  
   function _zoomed() {
     _projection
       .translate(_zoom.translate())
       .scale(_zoom.scale());
     console.log('zoom',_projection.scale(),_projection.translate());
 
-    _G.selectAll('circle').each(function(d) {
+    _G.select('g.points').selectAll('circle').each(function(d) {
       d3.select(this)
       .attr("cx", function (d) { return _projection(d.pos)[0]; })
       .attr("cy", function (d) { return _projection(d.pos)[1]; })
       .style('fill', function(d){return d.color; });
     });
+  
+  if (_chart.showGraticule()) {
+    _G.select('g.graticule').selectAll('path.graticule').each(function(d) {
+      d3.select(this).attr('d', _path);
+    });
+  }
   }
     
   _chart._doRender = function () {
@@ -966,6 +976,13 @@ dc.mapChart = function (parent, chartGroup) {
         .call(_zoom)
         .call(_zoom.event);
     
+    _G.append('g').classed('points',true);
+    
+    if (_chart.showGraticule()) {
+      _graticule = d3.geo.graticule().step(_graticuleStep);
+      _G.append('g').classed('graticule',true);
+    }
+    
     _chart.redraw();
     
     return _chart;
@@ -980,7 +997,7 @@ dc.mapChart = function (parent, chartGroup) {
     var points = facts.allFiltered().map(function(d,i) { return {color: _chart.getColor(d,i), pos:[+_lonAccessor(d),+_latAccessor(d)]}; });
 
     // add circles to svg
-    var circle = _G.selectAll("circle").data(points);
+    var circle = _G.select('g.points').selectAll("circle").data(points);
 
     circle.exit().remove();
 
@@ -991,6 +1008,14 @@ dc.mapChart = function (parent, chartGroup) {
     .attr("cx", function (d) { return _projection(d.pos)[0]; })
     .attr("cy", function (d) { return _projection(d.pos)[1]; })
     .style('fill', function(d){return d.color; });
+    
+    if (_chart.showGraticule()) {
+      var lines = _G.select('g.graticule').selectAll('path.graticule').data([_graticule()]);
+      
+      lines.exit().remove();
+      lines.enter().append('path').classed('graticule',true);
+      lines.attr('d', _path);
+    }
     
     return _chart;
   };
@@ -1032,6 +1057,22 @@ dc.mapChart = function (parent, chartGroup) {
       return _mapCenter;
     }
     _mapCenter = v;
+    return _chart;
+  };
+  
+  _chart.showGraticule = function (v) {
+    if (!arguments.length) {
+      return _showGraticule;
+    }
+    _showGraticule = v;
+    return _chart;
+  };
+  
+  _chart.graticuleStep = function (v) {
+    if (!arguments.length) {
+      return _graticuleStep;
+    }
+    _graticuleStep = v;
     return _chart;
   };
   
