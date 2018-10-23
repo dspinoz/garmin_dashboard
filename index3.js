@@ -1105,7 +1105,8 @@ dc.monthViewChart = function (parent, chartGroup) {
       _monthFormat = d3.time.format('%B'),
       _dayNumFormat = d3.time.format('%e');
 	  
-  var _hoverFunc = function(d,i) {},
+  var _onOver = function(d,i) { },
+      _onClick = function(d,i) { },
       _startDay = d3.time.monday;
     
   _chart._doRender = function () {
@@ -1195,9 +1196,8 @@ dc.monthViewChart = function (parent, chartGroup) {
       .attr('cx', function(d,i) { return i*x; })
       .attr('cy', r)
       .attr('r', r)
-      .on('mouseover', function(d,i) {
-        _hoverFunc(d,i);
-      });
+      .on('mouseover', _onOver)
+      .on('click', _onClick);
 
       var txt = g.selectAll('text.cal').data(function(d) { return d; });
       
@@ -1223,9 +1223,9 @@ dc.monthViewChart = function (parent, chartGroup) {
       .attr('y', r+(r*0.3)) //get text into the centre of the circle
       .attr('font-size', r)
       .attr('text-anchor', 'middle')
-      .text(function(d) {
-        return _dayNumFormat(d);
-      });
+      .text(_dayNumFormat)
+      .on('mouseover', _onOver)
+      .on('click', _onClick);
 	  
 	  
       // set the styles, note that order is important!
@@ -1259,6 +1259,22 @@ dc.monthViewChart = function (parent, chartGroup) {
       return _date;
     }
     _date = v;
+    return _chart;
+  };
+  
+  _chart.onClick = function (f) {
+    if (!arguments.length) {
+      return _onClick;
+    }
+    _onClick = f;
+    return _chart;
+  };
+  
+  _chart.onOver = function (f) {
+    if (!arguments.length) {
+      return _onOver;
+    }
+    _onOver = f;
     return _chart;
   };
   
