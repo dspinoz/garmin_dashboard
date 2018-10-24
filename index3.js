@@ -700,6 +700,32 @@ summaryPanel_create('lastmonth',d3.time.month, d3.time.format("%B"), null, -1);
 summaryPanel_create('lastweek',d3.time.week, d3.time.format("%W"), null, -1);
 summaryPanel_create('yesterday',d3.time.day, d3.time.format("%A"), null, -1);
 
+summaryPanel_create('lastyear2',d3.time.year, d3.time.format("%Y"), null, -2);
+summaryPanel_create('lastmonth2',d3.time.month, d3.time.format("%B"), null, -2);
+summaryPanel_create('lastweek2',d3.time.week, d3.time.format("%W"), null, -2);
+summaryPanel_create('lastday2',d3.time.day, d3.time.format("%A"), null, -2);
+
+summaryPanel_create('lastyear3',d3.time.year, d3.time.format("%Y"), null, -3);
+summaryPanel_create('lastmonth3',d3.time.month, d3.time.format("%B"), null, -3);
+summaryPanel_create('lastweek3',d3.time.week, d3.time.format("%W"), null, -3);
+summaryPanel_create('lastday3',d3.time.day, d3.time.format("%A"), null, -3);
+
+summaryPanel_create('lastyear4',d3.time.year, d3.time.format("%Y"), null, -4);
+summaryPanel_create('lastmonth4',d3.time.month, d3.time.format("%B"), null, -4);
+summaryPanel_create('lastweek4',d3.time.week, d3.time.format("%W"), null, -4);
+summaryPanel_create('lastday4',d3.time.day, d3.time.format("%A"), null, -4);
+
+summaryPanel_create('lastyear5',d3.time.year, d3.time.format("%Y"), null, -5);
+summaryPanel_create('lastmonth5',d3.time.month, d3.time.format("%B"), null, -5);
+summaryPanel_create('lastweek5',d3.time.week, d3.time.format("%W"), null, -5);
+summaryPanel_create('lastday5',d3.time.day, d3.time.format("%A"), null, -5);
+
+summaryPanel_create('lastyear6',d3.time.year, d3.time.format("%Y"), null, -6);
+summaryPanel_create('lastmonth6',d3.time.month, d3.time.format("%B"), null, -6);
+summaryPanel_create('lastweek6',d3.time.week, d3.time.format("%W"), null, -6);
+summaryPanel_create('lastday6',d3.time.day, d3.time.format("%A"), null, -6);
+
+
 
 
 
