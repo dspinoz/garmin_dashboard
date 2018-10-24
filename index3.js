@@ -915,6 +915,7 @@ dc.mapChart = function (parent, chartGroup) {
   var _projection, _zoom, _path;
   var _graticule;
   var _canvas, _inMemoryDom;
+  var _plotPoints, _plotLines;
   
   var _lonAccessor = function(d) { return d[0]; };
   var _latAccessor = function(d) { return d[1]; };
@@ -1026,17 +1027,46 @@ dc.mapChart = function (parent, chartGroup) {
     context.rect(0,0,_width,_height);
     context.fill();
 	
-	context.globalAlpha = 0.1;
+	if (_chart.plotLines()) {
+		
+		var lineData = [];
+		
+		_G.selectAll('custom.circle').each(function(d) {
+			var n = d3.select(this);
+			lineData.push([n.attr('cx'), n.attr('cy'), n.attr('color')]);
+		});
+		
+		//TODO color each line and then generate the coordinates for the line based off data points
+		d3.nest().key(function(d) { return d[2]; }).entries(lineData).forEach(function(d) {
+			
+			context.strokeStyle = d.key;
+			context.beginPath();
+			
+			var p0 = false;
+			d.values.forEach(function(p) {
+				if (!p0)
+					context.moveTo(p[0], p[1]);
+				else
+					context.lineTo(p[0], p[1]);
+				p0 = true;
+			});
+			context.stroke();
+		});
+	}
 	
-	_G.selectAll('custom.circle').each(function(d) {
-		var n = d3.select(this);
-		context.beginPath();
-		context.arc(n.attr('cx'), n.attr('cy'), n.attr('r'), 0, 2* Math.PI);
-		context.strokeStyle = n.attr('color')
-		context.stroke();
-		context.fillStyle = n.attr('color');
-		context.fill();
-	});
+	if (_chart.plotPoints()) {
+		context.globalAlpha = 0.1;
+		
+		_G.selectAll('custom.circle').each(function(d) {
+			var n = d3.select(this);
+			context.beginPath();
+			context.arc(n.attr('cx'), n.attr('cy'), n.attr('r'), 0, 2* Math.PI);
+			context.strokeStyle = n.attr('color')
+			context.stroke();
+			context.fillStyle = n.attr('color');
+			context.fill();
+		});
+	}
 	
 	if (_chart.showGraticule()) {
 		//TODO show graticule
@@ -1070,6 +1100,8 @@ dc.mapChart = function (parent, chartGroup) {
         .attr("r", "3px").attr('class','map');
     }
 
+	//TODO support plotPoints and plotLines for svg
+	//TODO take out svg rendering to new function
     circle
     .attr("cx", function (d) { return _projection(d.pos)[0]; })
     .attr("cy", function (d) { return _projection(d.pos)[1]; })
@@ -1152,6 +1184,22 @@ dc.mapChart = function (parent, chartGroup) {
     return _chart;
   };
   
+  _chart.plotPoints = function (v) {
+    if (!arguments.length) {
+      return _plotPoints;
+    }
+    _plotPoints = v;
+    return _chart;
+  };
+  
+  _chart.plotLines = function (v) {
+    if (!arguments.length) {
+      return _plotLines;
+    }
+    _plotLines = v;
+    return _chart;
+  };
+  
   return _chart.anchor(parent, chartGroup);
 };
 
@@ -1164,6 +1212,8 @@ chartMap.dimension(fileDim)
   .colorAccessor(function(d) { return d.File; })
   .colors(filenameColors)
   .useCanvas(true)
+  .plotPoints(true)
+  .plotLines(true)
   .scaleExtent([50000, 100000000]);
 
 
