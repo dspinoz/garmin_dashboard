@@ -1250,7 +1250,7 @@ chartMap.dimension(fileDim)
   .plotPoints(true)
   .plotLines(true)
   .showScale(true)
-  .scaleExtent([50000, 100000000]);
+  .scaleExtent([500, 100000000]);
 
 
 
