@@ -602,6 +602,59 @@ timePanel_register('stationary',['running','walking']);
 
 
 
+
+
+function timetable(name, timefmt, timefn, txt, valuefn) {
+
+var chartDayTable = interactive_dataTable(dc.dataTable("#chart-"+name+"-table"));
+var perDayDim = facts.dimension(function(d) { return timefmt(timefn(d.Time)); });
+var perDayGroup = group_reduceCountKey(perDayDim.group(), function(d){return d.File; });
+
+chartDayTable
+  .dimension({
+      filter: function(f) {
+        perDayDim.filter(f);
+      },
+      filterExact: function(v) {
+        perDayDim.filterExact(v);
+      },
+      filterFunction: function(f) {
+        perDayDim.filterFunction(f);
+      },
+      filterRange: function(r) {
+        perDayDim.filterRange(r);
+      },
+      bottom: function(sz) {
+        var gdata = perDayGroup.all();
+        return gdata.filter(function(d,i) { return d.value.size(); });
+      }
+  })
+  .group(function(d) { return name; })
+  .columns([
+    function(d) { 
+		var v = d.key;
+		if (valuefn) v = valuefn(d);
+		return v + (txt && d.key == timefmt(new Date()) ? " <small>"+txt(d)+"</small>" : ""); 
+	},
+    function(d) { return "<span class=\"badge\">"+d.value.size()+"</span>"; }
+  ]);
+
+}
+
+timetable('year', d3.time.format("%Y"), d3.time.year, function(d) { return 'This Year'; });
+timetable('month', d3.time.format("%m %B"), d3.time.month, function(d) { return 'This Month'; }, function (d) { return d.key.split(/\W/)[1]; });
+timetable('week', d3.time.format("%W"), d3.time.week, function(d) { return 'This Week'; });
+timetable('day', d3.time.format("%w %A"), d3.time.day, function(d) { return 'Today'; }, function (d) { return d.key.split(/\W/)[1]; });
+
+
+
+
+
+
+
+
+
+
 function summaryPanel_calculate(d) {
     if (d == null) return {distance:0,time:0,files:0};
     
