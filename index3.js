@@ -915,7 +915,7 @@ dc.mapChart = function (parent, chartGroup) {
   var _projection, _zoom, _path;
   var _graticule;
   var _canvas, _inMemoryDom;
-  var _plotPoints, _plotLines;
+  var _plotPoints, _plotLines, _showScale;
   
   var _lonAccessor = function(d) { return d[0]; };
   var _latAccessor = function(d) { return d[1]; };
@@ -1011,6 +1011,10 @@ dc.mapChart = function (parent, chartGroup) {
       }
     }
     
+	if (_chart.showScale()) {
+	  _chart.root().append('div').classed('scale',true);
+	}
+	
     _chart.redraw();
     
     return _chart;
@@ -1048,6 +1052,7 @@ dc.mapChart = function (parent, chartGroup) {
 				p0 = true;
 			});
 			context.stroke();
+			context.closePath();
 		});
 	}
 	
@@ -1062,11 +1067,36 @@ dc.mapChart = function (parent, chartGroup) {
 			context.stroke();
 			context.fillStyle = n.attr('color');
 			context.fill();
+			context.closePath();
 		});
 	}
 	
 	if (_chart.showGraticule()) {
 		//TODO show graticule
+	}
+	
+	if (_chart.showScale()) {
+		var p0 = [5, _height - 5], p1 = [105, _height - 5];
+		var distScale = d3.geo.distance(_projection.invert(p0), _projection.invert(p1)) * 6371; //multiply radians by radius of sphere (earth) (km)
+		var distCanvas = d3.geo.distance(_projection.invert([0,0]), _projection.invert([_width,0])) * 6371; //multiply radians by radius of sphere (earth) (km)
+		
+		context.globalAlpha = 1;
+		context.strokeStyle = '#000';
+		context.fillStyle = '#fff';
+		context.beginPath();
+		context.moveTo(p0[0], p0[1]);
+		context.lineTo(p1[0], p1[1]);
+		context.stroke();
+		context.beginPath();
+		context.arc(p0[0], p0[1], 3, 0, 2* Math.PI);
+		context.stroke();
+		context.fill();
+		context.beginPath();
+		context.arc(p1[0], p1[1], 3, 0, 2* Math.PI);
+		context.stroke();
+		context.fill();
+		
+		_chart.root().select('div.scale').text('Scale: ' + d3.round(distScale,3) + 'km ('+ d3.round(distCanvas,3) + 'km total)');
 	}
   }
 
@@ -1197,6 +1227,14 @@ dc.mapChart = function (parent, chartGroup) {
     return _chart;
   };
   
+  _chart.showScale = function (v) {
+    if (!arguments.length) {
+      return _showScale;
+    }
+    _showScale = v;
+    return _chart;
+  };
+  
   return _chart.anchor(parent, chartGroup);
 };
 
@@ -1211,6 +1249,7 @@ chartMap.dimension(fileDim)
   .useCanvas(true)
   .plotPoints(true)
   .plotLines(true)
+  .showScale(true)
   .scaleExtent([50000, 100000000]);
 
 
