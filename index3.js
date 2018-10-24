@@ -1091,6 +1091,153 @@ chartMap.dimension(fileDim)
 
 
 
+dc.monthViewChart = function (parent, chartGroup) {
+  var _chart = dc.colorMixin(dc.marginMixin(dc.baseMixin({})));
+  
+  _chart._mandatoryAttributes([]); //TODO date attribute?
+  
+  var _G;
+  var _width, _height;
+  
+  var _date;
+  
+  var _ymdFormat = d3.time.format('%Y-%m-%d'),
+      _monthFormat = d3.time.format('%B'),
+      _dayNumFormat = d3.time.format('%e');
+	  
+  var _hoverFunc = function(d,i) {};
+    
+  _chart._doRender = function () {
+    _chart.resetSvg();
+    
+    _width = _chart.width() - _chart.margins().right - _chart.margins().left;
+    _height = _chart.height() - _chart.margins().top - _chart.margins().bottom;
+
+    _G = _chart.svg()
+        .attr("width", _width + _chart.margins().right + _chart.margins().left)
+        .attr("height", _height + _chart.margins().top + _chart.margins().bottom)
+      .append("g")
+        .attr("transform", "translate(" + _chart.margins().left + "," + _chart.margins().top + ")");
+    
+    _chart.redraw();
+    
+    return _chart;
+  };
+
+  _chart._doRedraw = function () {
+    if (!_chart.date()) { 
+		console.log("error - no date provided for calendar chart");
+		return; 
+	}
+	
+      
+      var x = _width/7;
+      var y = x;
+      var r = x/2;
+
+      var g = _G.selectAll('g')
+        .data(function() {
+          var start = d3.time.sunday.floor(_chart.date());
+          
+          while (_chart.date().getMonth() == start.getMonth() && 
+                 start.getDate() != 0) {
+            start = d3.time.sunday.floor(new Date(start.getTime() - (24*60*60*1000)));
+          }
+          
+          var end = d3.time.sunday.ceil(new Date(_chart.date().getFullYear(), _chart.date().getMonth()+1, 0));
+          
+          var days = d3.time.days(start, end);
+
+          while (days.length < 42) {
+            end = d3.time.sunday.ceil(new Date(end.getTime() + (24*60*60*1000)));
+            days = d3.time.days(start, end);
+          }
+          
+          return [days.slice(0, 7),
+              days.slice(7, 14),
+              days.slice(14, 21),
+              days.slice(21, 28),
+              days.slice(28, 35),
+              days.slice(35, 42)];
+        });
+        
+      g.exit().remove();
+      
+      g.enter()
+        .append('g');
+      
+      g.attr('transform', function(d,i) {
+        return 'translate('+r+', ' + i*y + ')';
+      });
+
+      var c = g.selectAll('circle.cal')
+        .data(function(d) { return d; });
+        
+      c.exit().remove();
+       
+      c.enter()
+          .append('circle')
+          .classed('cal', true);
+          
+      c.classed('current', function(d) {
+        if (_ymdFormat(_chart.date()) == _ymdFormat(d)) {
+          return true;
+        }
+        return false;
+      })
+      .classed('in-month', function(d) {
+        if (_monthFormat(_chart.date()) == _monthFormat(d)) {
+          return true;
+        }
+        return false;
+      })
+      .attr('cx', function(d,i) { return i*x; })
+      .attr('cy', r)
+      .attr('r', r)
+      .on('mouseover', function(d,i) {
+        _hoverFunc(d,i);
+      });
+
+      var txt = g.selectAll('text.cal').data(function(d) { return d; });
+      
+      txt.exit().remove();
+      
+      txt.enter()
+        .append('text')
+        .classed('cal', true);
+            
+      txt.classed('current', function(d) {
+        if (_ymdFormat(_chart.date()) == _ymdFormat(d)) {
+          return true;
+        }
+        return false;
+      })
+      .classed('in-month', function(d) {
+        if (_monthFormat(_chart.date()) == _monthFormat(d)) {
+          return true;
+        }
+        return false;
+      })
+      .attr('x', function(d,i) { return i*x; })
+      .attr('y', r+(r*0.3)) //get text into the centre of the circle
+      .attr('font-size', r)
+      .attr('text-anchor', 'middle')
+      .text(function(d) {
+        return _dayNumFormat(d);
+      });
+    };
+  
+  _chart.date = function (v) {
+    if (!arguments.length) {
+      return _date;
+    }
+    _date = v;
+    return _chart;
+  };
+  
+  return _chart.anchor(parent, chartGroup);
+};
+
 var redraw_count = 0;
 
 function redraw() {
