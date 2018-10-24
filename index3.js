@@ -617,7 +617,7 @@ function summaryPanel_calculate(d) {
     return {distance:totalDistance,time:totalTime,files:files.size()};
 }
 
-function summaryPanel_create(name,timefn,accessfn) {
+function summaryPanel_create(name,timefn,valuefmt,accessfn,offset) {
 
 var perYearDim = facts.dimension(function(d) { return timefn(d.Time); });
 var chartSummaryYearFiles = dc.numberDisplay("#chart-summary-"+name+"-activities");
@@ -628,7 +628,11 @@ chartSummaryYearFiles
 	  value: function() {
 		  if (accessfn) return accessfn(yearTimeSummaryGroup.all());
 		  var now = timefn(new Date());
+		  if (offset) now = timefn.offset(now, offset);
 		  var ret = yearTimeSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
+		  
+		  if (valuefmt) d3.select("#chart-summary-"+name+"-value").text(valuefmt(now));
+		  
 		  return ret.length ? ret[0] : null;
 	  }
   })
@@ -649,6 +653,7 @@ chartSummaryYearDistance
 	  value: function() {
 		  if (accessfn) return accessfn(yearTimeSummaryGroup.all());
 		  var now = timefn(new Date());
+		  if (offset) now = timefn.offset(now, offset);
 		  var ret = yearTimeSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
 		  return ret.length ? ret[0] : null;
 	  }
@@ -670,6 +675,7 @@ chartSummaryYearTime
 	  value: function() {
 		  if (accessfn) return accessfn(yearTimeSummaryGroup.all());
 		  var now = timefn(new Date());
+		  if (offset) now = timefn.offset(now, offset);
 		  var ret = yearTimeSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
 		  return ret.length ? ret[0] : null;
 	  }
@@ -684,10 +690,16 @@ chartSummaryYearTime
   });
 }
 
-summaryPanel_create('year',d3.time.year);
-summaryPanel_create('month',d3.time.month);
-summaryPanel_create('week',d3.time.week);
-summaryPanel_create('day',d3.time.day);
+summaryPanel_create('year',d3.time.year, d3.time.format("%Y"));
+summaryPanel_create('month',d3.time.month, d3.time.format("%B"));
+summaryPanel_create('week',d3.time.week, d3.time.format("%W"));
+summaryPanel_create('day',d3.time.day, d3.time.format("%A"));
+
+summaryPanel_create('lastyear',d3.time.year, d3.time.format("%Y"), null, -1);
+summaryPanel_create('lastmonth',d3.time.month, d3.time.format("%B"), null, -1);
+summaryPanel_create('lastweek',d3.time.week, d3.time.format("%W"), null, -1);
+summaryPanel_create('yesterday',d3.time.day, d3.time.format("%A"), null, -1);
+
 
 
 
