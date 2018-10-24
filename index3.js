@@ -1022,10 +1022,7 @@ dc.mapChart = function (parent, chartGroup) {
 	var context = _canvas.node().getContext("2d");
 	
     // clear canvas
-	context.globalAlpha = 1;
-    context.fillStyle = "#fff";
-    context.rect(0,0,_width,_height);
-    context.fill();
+	context.clearRect(0, 0, _width, _height);
 	
 	if (_chart.plotLines()) {
 		
