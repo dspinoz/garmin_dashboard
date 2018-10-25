@@ -672,82 +672,7 @@ function summaryPanel_calculate(d) {
     return {distance:totalDistance,time:totalTime,files:files.size()};
 }
 
-function summaryPanel_create(name,timefn,valuefmt,accessfn,offset) {
-
-var perYearDim = facts.dimension(function(d) { return timefn(d.Time); });
-var chartSummaryYearFiles = dc.numberDisplay("#chart-summary-"+name+"-activities");
-var yearFilesSummaryGroup = group_reduceMap(perYearDim.group(), function(d) { return d.File+d.PointIndex; });
-
-chartSummaryYearFiles
-  .group({
-	  value: function() {
-		  if (accessfn) return accessfn(yearTimeSummaryGroup.all());
-		  var now = timefn(new Date());
-		  if (offset) now = timefn.offset(now, offset);
-		  var ret = yearTimeSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
-		  
-		  if (valuefmt) d3.select("#chart-summary-"+name+"-value").text(valuefmt(now));
-		  
-		  return ret.length ? ret[0] : null;
-	  }
-  })
-  .formatNumber(function(d){
-    return "<span class=\"badge\">"+d3.round(d)+"<span>";
-  })
-  .valueAccessor(function(d) {
-	var ret = summaryPanel_calculate(d);
-	// numberDisplay only allows a single value to be returned
-	return ret.files;
-  });
-  
-var chartSummaryYearDistance = dc.numberDisplay("#chart-summary-"+name+"-distance");
-var yearDistanceSummaryGroup = group_reduceMap(perYearDim.group(), function(d) { return d.File+d.PointIndex; });
-
-chartSummaryYearDistance
-  .group({
-	  value: function() {
-		  if (accessfn) return accessfn(yearTimeSummaryGroup.all());
-		  var now = timefn(new Date());
-		  if (offset) now = timefn.offset(now, offset);
-		  var ret = yearTimeSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
-		  return ret.length ? ret[0] : null;
-	  }
-  })
-  .formatNumber(function(d){
-    return d3.round(d/1000,2)+"<small>km</small>";
-  })
-  .valueAccessor(function(d) {
-	var ret = summaryPanel_calculate(d);
-	// numberDisplay only allows a single value to be returned
-	return ret.distance;
-  });
-
-var chartSummaryYearTime = dc.numberDisplay("#chart-summary-"+name+"-time");
-var yearTimeSummaryGroup = group_reduceMap(perYearDim.group(), function(d) { return d.File+d.PointIndex; });
-
-chartSummaryYearTime
-  .group({
-	  value: function() {
-		  if (accessfn) return accessfn(yearTimeSummaryGroup.all());
-		  var now = timefn(new Date());
-		  if (offset) now = timefn.offset(now, offset);
-		  var ret = yearTimeSummaryGroup.all().filter(function(d) { return d.key.getTime() == now.getTime(); });
-		  return ret.length ? ret[0] : null;
-	  }
-  })
-  .formatNumber(function(d){
-    return formatSeconds(d3.round(d / 1000), true, true);
-  })
-  .valueAccessor(function(d) {
-	var ret = summaryPanel_calculate(d);
-	// numberDisplay only allows a single value to be returned
-	return ret.time;
-  });
-}
-
-
 var summarytablegroups = d3.map();
- 
 function summaryPanel2(name,timefn,timefmt,valuefn,timeoffset,grpname) {
 	if (!grpname) grpname = name;
 
@@ -796,31 +721,19 @@ summaryPanel2('lastmonth',d3.time.month, d3.time.format("%m %B %Y"), function (d
 summaryPanel2('lastweek',d3.time.week, d3.time.format("%Y %W"), function (d) { return d.split(/\W/)[1]; }, -1, 'week');
 summaryPanel2('yesterday',d3.time.day, d3.time.format("%w %A %d %m %Y"), function (d) { return d.split(/\W/)[1]; }, -1, 'day');
 
+summaryPanel2('lastyear2', d3.time.year, d3.time.format("%Y"), null, -2, 'year');
+summaryPanel2('lastmonth2',d3.time.month, d3.time.format("%m %B %Y"), function (d) { return d.split(/\W/)[1]; }, -2, 'month');
+summaryPanel2('lastweek2',d3.time.week, d3.time.format("%Y %W"), function (d) { return d.split(/\W/)[1]; }, -2, 'week');
+summaryPanel2('lastday2',d3.time.day, d3.time.format("%w %A %d %m %Y"), function (d) { return d.split(/\W/)[1]; }, -2, 'day');
 
-summaryPanel_create('lastyear2',d3.time.year, d3.time.format("%Y"), null, -2);
-summaryPanel_create('lastmonth2',d3.time.month, d3.time.format("%B"), null, -2);
-summaryPanel_create('lastweek2',d3.time.week, d3.time.format("%W"), null, -2);
-summaryPanel_create('lastday2',d3.time.day, d3.time.format("%A"), null, -2);
+summaryPanel2('lastyear3', d3.time.year, d3.time.format("%Y"), null, -3, 'year');
+summaryPanel2('lastmonth3',d3.time.month, d3.time.format("%m %B %Y"), function (d) { return d.split(/\W/)[1]; }, -3, 'month');
+summaryPanel2('lastweek3',d3.time.week, d3.time.format("%Y %W"), function (d) { return d.split(/\W/)[1]; }, -3, 'week');
+summaryPanel2('lastday3',d3.time.day, d3.time.format("%w %A %d %m %Y"), function (d) { return d.split(/\W/)[1]; }, -3, 'day');
 
-summaryPanel_create('lastyear3',d3.time.year, d3.time.format("%Y"), null, -3);
-summaryPanel_create('lastmonth3',d3.time.month, d3.time.format("%B"), null, -3);
-summaryPanel_create('lastweek3',d3.time.week, d3.time.format("%W"), null, -3);
-summaryPanel_create('lastday3',d3.time.day, d3.time.format("%A"), null, -3);
 
-summaryPanel_create('lastyear4',d3.time.year, d3.time.format("%Y"), null, -4);
-summaryPanel_create('lastmonth4',d3.time.month, d3.time.format("%B"), null, -4);
-summaryPanel_create('lastweek4',d3.time.week, d3.time.format("%W"), null, -4);
-summaryPanel_create('lastday4',d3.time.day, d3.time.format("%A"), null, -4);
 
-summaryPanel_create('lastyear5',d3.time.year, d3.time.format("%Y"), null, -5);
-summaryPanel_create('lastmonth5',d3.time.month, d3.time.format("%B"), null, -5);
-summaryPanel_create('lastweek5',d3.time.week, d3.time.format("%W"), null, -5);
-summaryPanel_create('lastday5',d3.time.day, d3.time.format("%A"), null, -5);
 
-summaryPanel_create('lastyear6',d3.time.year, d3.time.format("%Y"), null, -6);
-summaryPanel_create('lastmonth6',d3.time.month, d3.time.format("%B"), null, -6);
-summaryPanel_create('lastweek6',d3.time.week, d3.time.format("%W"), null, -6);
-summaryPanel_create('lastday6',d3.time.day, d3.time.format("%A"), null, -6);
 
 
 
