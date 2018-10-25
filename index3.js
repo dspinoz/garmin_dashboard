@@ -1124,7 +1124,21 @@ dc.mapChart = function (parent, chartGroup) {
 	}
 	
 	if (_chart.showScale()) {
-		var p0 = [5, _height - 5], p1 = [105, _height - 5];
+		
+		//draw a grid over the map to show the scale
+		var gridSize = 100;
+		context.globalAlpha = 0.1;
+		context.strokeStyle = '#000';
+		context.beginPath();
+		for(var x = -3; x < _width; x+= gridSize) {
+			for(var y = -3; y < _height; y+= gridSize) {
+				context.strokeRect(x,y, gridSize, gridSize);
+			}
+		}
+		context.closePath();
+		
+		
+		var p0 = [-3+gridSize, _height - 5], p1 = [-3+gridSize+gridSize, _height - 5];
 		var distScale = d3.geo.distance(_projection.invert(p0), _projection.invert(p1)) * 6371; //multiply radians by radius of sphere (earth) (km)
 		var distCanvas = d3.geo.distance(_projection.invert([0,0]), _projection.invert([_width,0])) * 6371; //multiply radians by radius of sphere (earth) (km)
 		
