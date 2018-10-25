@@ -745,15 +745,57 @@ chartSummaryYearTime
   });
 }
 
-summaryPanel_create('year',d3.time.year, d3.time.format("%Y"));
-summaryPanel_create('month',d3.time.month, d3.time.format("%B"));
-summaryPanel_create('week',d3.time.week, d3.time.format("%W"));
-summaryPanel_create('day',d3.time.day, d3.time.format("%A"));
 
-summaryPanel_create('lastyear',d3.time.year, d3.time.format("%Y"), null, -1);
-summaryPanel_create('lastmonth',d3.time.month, d3.time.format("%B"), null, -1);
-summaryPanel_create('lastweek',d3.time.week, d3.time.format("%W"), null, -1);
-summaryPanel_create('yesterday',d3.time.day, d3.time.format("%A"), null, -1);
+var summarytablegroups = d3.map();
+ 
+function summaryPanel2(name,timefn,timefmt,valuefn,timeoffset,grpname) {
+	if (!grpname) grpname = name;
+
+	var now = timefn(new Date());
+	if (timeoffset) now = timefn.offset(now, timeoffset);
+
+	d3.select("#chart-summary-"+name+"-value").text(valuefn ? valuefn(timefmt(now)) : timefmt(now));
+	
+	if (!summarytablegroups.has(grpname)) {
+		var dim = facts.dimension(function(d) { return timefmt(timefn(d.Time)); });
+		summarytablegroups.set(grpname, group_reduceMap(dim.group(), function(d) { return d.File+d.PointIndex; }));
+	}
+	
+	var customgrp = {
+		  value: function() {
+			  var ret = summarytablegroups.get(grpname).all().filter(function(d) { return d.key == timefmt(now); });
+			  return ret.length ? ret[0] : null;
+		  }
+	  };
+
+	dc.numberDisplay("#chart-summary-"+name+"-activities")
+	  .group(customgrp)
+	  .formatNumber(function(d){
+		return "<span class=\"badge\">"+d3.round(d)+"<span>";
+	  })
+	  .valueAccessor(function(d) { return summaryPanel_calculate(d).files; });
+	  
+	dc.numberDisplay("#chart-summary-"+name+"-distance")
+		.group(customgrp)
+		.formatNumber(function(d){ return d3.round(d/1000,2)+"<small>km</small>"; })
+		.valueAccessor(function(d) { return summaryPanel_calculate(d).distance; });
+	
+	dc.numberDisplay("#chart-summary-"+name+"-time")
+		.group(customgrp)
+		.formatNumber(function(d){ return formatSeconds(d3.round(d / 1000), true, true); })
+		.valueAccessor(function(d) { return summaryPanel_calculate(d).time; });
+}
+
+summaryPanel2('year', d3.time.year, d3.time.format("%Y"));
+summaryPanel2('month',d3.time.month, d3.time.format("%m %B %Y"), function (d) { return d.split(/\W/)[1]; });
+summaryPanel2('week',d3.time.week, d3.time.format("%Y %W"), function (d) { return d.split(/\W/)[1]; });
+summaryPanel2('day',d3.time.day, d3.time.format("%w %A %d %m %Y"), function (d) { return d.split(/\W/)[1]; });
+
+summaryPanel2('lastyear', d3.time.year, d3.time.format("%Y"), null, -1, 'year');
+summaryPanel2('lastmonth',d3.time.month, d3.time.format("%m %B %Y"), function (d) { return d.split(/\W/)[1]; }, -1, 'month');
+summaryPanel2('lastweek',d3.time.week, d3.time.format("%Y %W"), function (d) { return d.split(/\W/)[1]; }, -1, 'week');
+summaryPanel2('yesterday',d3.time.day, d3.time.format("%w %A %d %m %Y"), function (d) { return d.split(/\W/)[1]; }, -1, 'day');
+
 
 summaryPanel_create('lastyear2',d3.time.year, d3.time.format("%Y"), null, -2);
 summaryPanel_create('lastmonth2',d3.time.month, d3.time.format("%B"), null, -2);
