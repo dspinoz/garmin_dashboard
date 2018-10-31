@@ -982,30 +982,8 @@ dc.mapChart = function (parent, chartGroup) {
       .scale(_zoom.scale());
     console.log('zoom',_projection.scale(),_projection.translate());
 	
-	var sel;
-	
-    if (_chart.useCanvas()) {
-		sel = _G.selectAll('custom.circle')
-	} else {
-		sel = _G.select('g.points').selectAll('circle')
-	}
-	
-
-    sel.each(function(d) {
-      d3.select(this)
-      .attr("cx", function (d) { return _projection(d.pos)[0]; })
-      .attr("cy", function (d) { return _projection(d.pos)[1]; })
-      .attr('color', function(d){ return d.color; })
-      .style('fill', function(d){return d.color; });
-    });
   
-  if (_chart.showGraticule()) {
-    _G.select('g.graticule').selectAll('path.graticule').each(function(d) {
-      d3.select(this).attr('d', _path);
-    });
-  }
-  
-    drawCanvas();
+    _chart.redraw();
   }
     
   _chart._doRender = function () {
