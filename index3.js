@@ -963,7 +963,7 @@ dc.mapChart = function (parent, chartGroup) {
   var _projection, _zoom, _path;
   var _graticule;
   var _canvas, _inMemoryDom;
-  var _plotPoints, _plotLines, _showScale;
+  var _plotPoints, _pointZoom, _plotLines, _showScale;
   
   var _lonAccessor = function(d) { return d[0]; };
   var _latAccessor = function(d) { return d[1]; };
@@ -1082,7 +1082,8 @@ dc.mapChart = function (parent, chartGroup) {
 		});
 	}
 	
-	if (_chart.plotPoints()) {
+	if ((_chart.plotPoints() && !_pointZoom) || 
+      (_chart.plotPoints() && _projection.scale() > _pointZoom) ) {
 		context.globalAlpha = 0.1;
 		
 		_G.selectAll('custom.circle').each(function(d) {
@@ -1259,6 +1260,14 @@ dc.mapChart = function (parent, chartGroup) {
     return _chart;
   };
   
+  _chart.pointZoom = function (v) {
+    if (!arguments.length) {
+      return _pointZoom;
+    }
+    _pointZoom = v;
+    return _chart;
+  };
+  
   _chart.plotLines = function (v) {
     if (!arguments.length) {
       return _plotLines;
@@ -1288,6 +1297,7 @@ chartMap.dimension(fileDim)
   .colors(filenameColors)
   .useCanvas(true)
   .plotPoints(true)
+  .pointZoom(9000000)
   .plotLines(true)
   .showScale(true)
   .scaleExtent([500, 100000000]);
