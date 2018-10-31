@@ -1058,9 +1058,9 @@ dc.mapChart = function (parent, chartGroup) {
 		
 		var lineData = [];
 		
-		_G.selectAll('custom.circle').each(function(d) {
+		_G.selectAll('custom.line').each(function(d) {
 			var n = d3.select(this);
-			lineData.push([n.attr('cx'), n.attr('cy'), n.attr('color')]);
+			lineData.push([n.attr('x'), n.attr('y'), n.attr('color')]);
 		});
 		
 		//TODO color each line and then generate the coordinates for the line based off data points
@@ -1147,22 +1147,36 @@ dc.mapChart = function (parent, chartGroup) {
     //var data = _chart.group().all();
     
     // points
-    var points = facts.allFiltered().map(function(d,i) { return {color: _chart.getColor(d,i), pos:[+_lonAccessor(d),+_latAccessor(d)]}; });
+    var pointsall = facts.allFiltered().map(function(d,i) { 
+      var pos = [+_lonAccessor(d),+_latAccessor(d)];
+      return {color: _chart.getColor(d,i), pos:pos, c:_projection(pos)}; 
+    });
+      
+    // have a buffer as to not show straight lines on the border of the canvas
+    var buff = 10;
+    var points = pointsall.filter(function(d) {
+      return d.c[0] > (buff*-1) && d.c[1] > (buff*-1) && d.c[0] < (_width+buff) && d.c[1] < (_height+buff);
+    });
+    
 
     // add circles to map
     var circle;
+    var line;
 
     if (_chart.useCanvas()) {
       circle = _G.selectAll('custom.circle').data(points);
+      line = _G.selectAll('custom.line').data(pointsall);
     } else {
       circle = _G.select('g.points').selectAll("circle").data(points);
     }
 
     circle.exit().remove();
+    line.exit().remove();
 
     if (_chart.useCanvas()) {
       circle.enter().append('custom').classed('circle',true)
         .attr("r", "3");
+      line.enter().append('custom').classed('line',true);
     } else {
       circle.enter().append("circle")
         .attr("r", "3px").attr('class','map');
@@ -1171,10 +1185,16 @@ dc.mapChart = function (parent, chartGroup) {
 	//TODO support plotPoints and plotLines for svg
 	//TODO take out svg rendering to new function
     circle
-    .attr("cx", function (d) { return _projection(d.pos)[0]; })
-    .attr("cy", function (d) { return _projection(d.pos)[1]; })
+    .attr("cx", function (d) { return d.c[0]; })
+    .attr("cy", function (d) { return d.c[1]; })
     .attr('color', function(d){ return d.color; })
     .style('fill', function(d){return d.color; });
+    
+    line
+    .attr("x", function (d) { return d.c[0]; })
+    .attr("y", function (d) { return d.c[1]; })
+    .attr('color', function(d){return d.color; })
+    .style('color', function(d){return d.color; });
     
     if (_chart.showGraticule() && !_chart.useCanvas()) {
       var lines = _G.select('g.graticule').selectAll('path.graticule').data([_graticule()]);
