@@ -1084,7 +1084,7 @@ dc.mapChart = function (parent, chartGroup) {
 	
 	if ((_chart.plotPoints() && !_pointZoom) || 
       (_chart.plotPoints() && _projection.scale() > _pointZoom) ) {
-		context.globalAlpha = 0.1;
+		context.globalAlpha = 0.3;
 		
 		_G.selectAll('custom.circle').each(function(d) {
 			var n = d3.select(this);
