@@ -10,7 +10,7 @@
                 }
             ]
         },
-        {"name": "year", "role": "time"q}
+        {"name": "year", "role": "time"}
     ],
     "cubes": [
         {
