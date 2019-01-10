@@ -1,2 +1,16 @@
 bottle==0.12.16
+Click==7.0
+cubes==1.1
+expressions==0.2.3
+Flask==1.0.2
+functools32==3.2.3.post2
+grako==3.99.9
+itsdangerous==1.1.0
+Jinja2==2.10
+jsonschema==2.6.0
 lxml==4.3.0
+MarkupSafe==1.1.0
+python-dateutil==2.7.5
+six==1.12.0
+SQLAlchemy==1.2.15
+Werkzeug==0.14.1
