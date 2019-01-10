@@ -9,10 +9,6 @@ transform = ET.XSLT(xslt)
 device_xslt = ET.parse('tcx_to_device.xsl')
 device_transform = ET.XSLT(device_xslt)
 
-@route('/hello/<name>')
-def index(name):
-    return template('<b>Hello {{name}}</b>!', name=name)
-
 @route('/bower_components/<path:path>')
 def bower_components(path):
   return static_file(path, root='./bower_components')
@@ -33,21 +29,9 @@ def device_tcx(path):
 def index():
   return static_file('index.html', root='.')
 
-@route('/index2.html')
-def index2():
-  return static_file('index2.html', root='.')
-
-@route('/index3.html')
-def index3():
-  return static_file('index3.html', root='.')
-
-@route('/index3.js')
-def index3_js():
-  return static_file('index3.js', root='.')
-
-@route('/tcx_parser.js')
-def tcx_parser():
-  return static_file('tcx_parser.js', root='.')
+@route('/index.js')
+def index_js():
+  return static_file('index.js', root='.')
 
 @route('/utils.js')
 def tcx_parser():
@@ -57,10 +41,6 @@ def tcx_parser():
 def tcx_to_csv():
   return static_file('tcx_to_csv.xsl', root='.')
 
-@route('/tcx.xml')
-def tcx():
-  return static_file('tcx.xml', root='.')
-  
 @route('/activities.csv')
 def activities():
   return static_file('activities/Activities.txt', root='.')
