@@ -2,7 +2,7 @@
 
 A dashboard for viewing and analysing Garmin activity files (TCX)
 
-
+![screenshot](https://github.com/dspinoz/garmin_dashboard/blob/master/wiki/screencapture.png)
 
 ## Garmin Connect
 
