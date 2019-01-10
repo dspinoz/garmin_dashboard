@@ -601,31 +601,47 @@ timePanel_register('stationary',['running','walking']);
 
 
 
-
+// keep track of the dimensions/groups for optimization purposes
+// TODO would be easier to understand if the dims were passed to the timetable, rather than it generating/caching
+var timetabledims = d3.map();
+var timetablegroups = d3.map();
 
 function timetable(name, timefmt, timefn, txt, keyfn, valuefn) {
 
-
 var chartDayTable = interactive_dataTable(dc.dataTable("#chart-"+name+"-table"));
-var perDayDim = facts.dimension(function(d) { return timefmt(timefn(d.Time)); });
-var perDayGroup = group_reduceCountKey(perDayDim.group(), function(d){return d.File; });
+
+var dim;
+if (!timetabledims.has(name)) {
+	dim = facts.dimension(function(d) { return timefmt(timefn(d.Time)); });
+	timetabledims.set(name, dim);
+} else {
+	dim = timetabledims.get(name);
+}
+
+var grp;
+if (!timetablegroups.has(name)) {
+	grp = group_reduceMap(dim.group(), function(d) { return d.File+d.PointIndex; });
+	timetablegroups.set(name, grp);
+} else {
+	grp = timetablegroups.get(name);
+}
 
 chartDayTable
   .dimension({
       filter: function(f) {
-        perDayDim.filter(f);
+        dim.filter(f);
       },
       filterExact: function(v) {
-        perDayDim.filterExact(v);
+        dim.filterExact(v);
       },
       filterFunction: function(f) {
-        perDayDim.filterFunction(f);
+        dim.filterFunction(f);
       },
       filterRange: function(r) {
-        perDayDim.filterRange(r);
+        dim.filterRange(r);
       },
       bottom: function(sz) {
-        var gdata = perDayGroup.all();
+        var gdata = grp.all();
         return gdata.filter(function(d,i) { return d.value.size(); });
       }
   })
@@ -688,6 +704,7 @@ function summaryPanel2(name,timefn,timefmt,valuefn,timeoffset,grpname) {
 	
 	var customgrp = {
 		  value: function() {
+			  // TODO could reuse the cached groups from timetable()
 			  var ret = summarytablegroups.get(grpname).all().filter(function(d) { return d.key == timefmt(now); });
 			  return ret.length ? ret[0] : null;
 		  }
