@@ -40,7 +40,7 @@ fields = [
 	("distance", "float"),
 	("altitude", "float"),
 	("lap", "integer"),
-#	("cadence", "float"), #TODO handle empty for float conversion
+	("cadence", "float"), 
 ]
 
 
@@ -83,5 +83,15 @@ for root,dirs,files in os.walk("./activities"):
 				
 				record = dict(zip(field_names, row))
 				print("record",record)
+				
+				if not record['distance']:
+					record['distance'] = 0
+					
+				if not record['altitude']:
+					record['altitude'] = 0
+					
+				if not record['cadence']:
+					record['cadence'] = 0
+					
 				insert_command.execute(record)
 
