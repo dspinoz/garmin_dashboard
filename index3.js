@@ -9,11 +9,11 @@ var facts = crossfilter();
 
 function data_hrZone(d) {
 	if (d.HeartRate == 0) return 0;
-	if (d.HeartRate < 130) return 1;
-	if (d.HeartRate < 139) return 2;
-	if (d.HeartRate < 149) return 3;
-	if (d.HeartRate < 163) return 4;
-	if (d.HeartRate < 176) return 5;
+	if (d.HeartRate < 102) return 1;
+	if (d.HeartRate < 117) return 2;
+	if (d.HeartRate < 122) return 3;
+	if (d.HeartRate < 150) return 4;
+	if (d.HeartRate < 170) return 5;
 	if (d.HeartRate < 189) return 6;
 	return 7;
 }
@@ -939,12 +939,12 @@ chartHRZoneTable
 		// TODO consolidate into data_hrZone
 		var allzones = d3.map({
 			0:{html:'<span>None</span>',value:d3.map()},
-			1:{html:'<span>&le;129</span>',value:d3.map()},
-			2:{html:'<span>130-139 <small>Z1</small></span>',value:d3.map()},
-			3:{html:'<span>139-149 <small>Z2</small></span>',value:d3.map()},
-			4:{html:'<span>149-163 <small>Z3</small></span>',value:d3.map()},
-			5:{html:'<span>163-176 <small>Z4</small></span>',value:d3.map()},
-			6:{html:'<span>176-189 <small>Z5</small></span>',value:d3.map()},
+			1:{html:'<span>&le;102</span>',value:d3.map()},
+			2:{html:'<span>102-117 <small>Z1</small></span>',value:d3.map()},
+			3:{html:'<span>117-122 <small>Z2</small></span>',value:d3.map()},
+			4:{html:'<span>122-150 <small>Z3</small></span>',value:d3.map()},
+			5:{html:'<span>150-170 <small>Z4</small></span>',value:d3.map()},
+			6:{html:'<span>170-189 <small>Z5</small></span>',value:d3.map()},
 			7:{html:'<span>&ge;190</span>',value:d3.map()}
 		});
 		
