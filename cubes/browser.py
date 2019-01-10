@@ -10,7 +10,7 @@ workspace = Workspace(config=settings)
 
 print("Got workspace")
 
-browser = workspace.browser("ibrd_balance")
+browser = workspace.browser("activities")
 
 print("Got browser")
 
