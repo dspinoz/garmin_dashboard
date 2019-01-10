@@ -1,2 +1,11 @@
 *.tcx
 bower_components
+activities
+node_modules
+bin
+Scripts
+lib
+include
+tcl
+pip-selfcheck.json
+
