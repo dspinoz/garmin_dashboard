@@ -1,0 +1,26 @@
+{
+  "name": "garmin_dashboard",
+  "version": "0.0.1",
+  "description": "view garmin tcx activities",
+  "main": "index.html",
+  "dependencies": {
+    "bower": "^1.8.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dspinoz/garmin_dashboard.git"
+  },
+  "keywords": [
+    "dashboard"
+  ],
+  "author": "dspinoz <dspinoz@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dspinoz/garmin_dashboard/issues"
+  },
+  "homepage": "https://github.com/dspinoz/garmin_dashboard#readme"
+}
