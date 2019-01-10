@@ -26,13 +26,11 @@ print("Aggregate:")
 print(result)
 print(result.summary)
 
-sys.exit(0)
-
 for record in result:
     print("  ",record)
 
-print("Aggregate: drilldown=['year']")
-result = browser.aggregate(drilldown=["year"])
+print("Aggregate: drilldown=['lap']")
+result = browser.aggregate(drilldown=["lap"])
 
 print(result)
 print(result.summary)
