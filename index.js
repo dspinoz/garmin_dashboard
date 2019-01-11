@@ -127,7 +127,7 @@ function allPointsGroup(chart) {
 	
 	var q = d3.queue();
 	
-	q.defer(d3.json, '/all-points-group');
+	q.defer(d3.json, '/aggregate');
 	
 	q.awaitAll(function(err,data) {
 		ret = data[0].count;
@@ -320,9 +320,30 @@ function group_reduceMappedValue(group,keyFunc,valueFunc) {
     });
 }
 
-var chartTotalDistance = dc.numberDisplay("#chart-total-activities");
-chartTotalDistance
-  .group(group_get_length(fileDim.group().reduceCount(), function(d){ return d.value; }))
+var chartTotalActivities = dc.numberDisplay("#chart-total-activities");
+
+function allActivitiesGroup(chart) {
+	
+	var ret = 0;
+	
+	var q = d3.queue();
+	
+	q.defer(d3.json, '/drilldown/file');
+	
+	q.awaitAll(function(err,data) {
+		ret = data[0].length
+		chart.render();
+	});
+	
+	return {
+		all:function() {
+			return [ret];
+		}
+	};
+}
+
+chartTotalActivities
+  .group(allActivitiesGroup(chartTotalActivities))
   .formatNumber(d3.round)
   .valueAccessor(function(d) { return d; });
   

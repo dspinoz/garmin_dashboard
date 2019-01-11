@@ -54,10 +54,19 @@ def tcx_to_csv():
 def activities():
   return static_file('activities/Activities.txt', root='.')
 
-@route('/all-points-group')
+@route('/aggregate')
 def all_points_group():
   res = browser.aggregate()
   return json.dumps(res.summary)
+  
+@route('/drilldown/file')
+def all_activities_group():
+  res = browser.aggregate(drilldown=["file"])
+  
+  ret = []
+  for record in res:
+    ret.append(record)
+  return json.dumps(ret)
 
 run(host='localhost', port=8000)
 
