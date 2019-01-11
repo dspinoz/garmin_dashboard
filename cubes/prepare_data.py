@@ -66,14 +66,15 @@ type_map = {"integer": sqlalchemy.Integer,
 			"boolean": sqlalchemy.Integer}
 
 fields = [
+	("file", "string"),
 	("index", "integer"),
+	("lap", "integer"),
 	("time", "string"),
 	("position_lat", "string"),
 	("position_lon", "string"),
 	("heart_rate", "integer"),
 	("distance", "float"),
 	("altitude", "float"),
-	("lap", "integer"),
 	("cadence", "float"), 
 ]
 
