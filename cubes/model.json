@@ -10,15 +10,25 @@
                 }
             ]
         },
+        {
+         "name": "file",
+         "levels": [
+                {
+                    "name":"file",
+                    "label":"Fap",
+                    "attributes": ["file"]
+                }
+            ]
+        },
         {"name": "year", "role": "time"}
     ],
     "cubes": [
         {
             "name": "activities",
-            "dimensions": ["lap", "year"],
+            "dimensions": ["file", "lap", "year"],
             "aggregates": [
                     {
-                        "name": "record_count",
+                        "name": "count",
                         "function": "count"
                     }
                 ]
