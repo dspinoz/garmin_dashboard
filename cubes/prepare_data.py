@@ -100,10 +100,13 @@ for root,dirs,files in os.walk("./activities"):
 		f_path = os.path.join(root,f)
 		print(f,re.match('.*\.tcx$',f))
 		if re.match('.*\.tcx$',f):
+		
+			conn = sqlalchemy.engine.Connection(engine)
+			trans = conn.begin()
+			
 			try:
 				points = activity_tcx_to_csv_str(f_path)
 				
-				icmd = table.insert()
 				
 				for p in points:
 					
@@ -119,9 +122,14 @@ for root,dirs,files in os.walk("./activities"):
 						p['cadence'] = 0
 						
 					#print(p)
-					icmd.execute(p)
-					
+					conn.execute(table.insert(), p)
+				
+				trans.commit()
+				conn.close()
+				
 			except AttributeError as err:
 				print("Error processing",f,err)
+				trans.commit()
+				conn.close()
 				pass
 			
