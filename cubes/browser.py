@@ -48,8 +48,8 @@ print(result.summary)
 for record in result:
     print("  ",record)
 
-print("Aggregate: drilldown=['file']")
-result = browser.aggregate(drilldown=["file"])
+print("Aggregate: drilldown=['device']")
+result = browser.aggregate(drilldown=["device"])
 
 print(result)
 print(result.summary)

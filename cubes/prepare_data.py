@@ -21,6 +21,7 @@ def activity_tcx_to_csv_str(path):
 	
 	for activity in tree.getroot().findall("g:Activities/g:Activity", namespaces):
 		print("Activity: ",activity.attrib['Sport'], activity.find("g:Id", namespaces).text)
+		device = activity.find("g:Creator/g:Name", namespaces).text
 		
 		lapNo = 0
 		pointNo = 0
@@ -45,6 +46,7 @@ def activity_tcx_to_csv_str(path):
 					"distance": point.find("g:DistanceMeters", namespaces).text,
 					"altitude": point.find("g:AltitudeMeters", namespaces).text,
 					#TODO "cadence": point.find("g:Extensions/ext:TPX/ext:RunCadence", namespaces)},
+					"device": device,
 				}
 				
 		print("Activity completed with ",lapNo,"laps and ",pointNo,"points")
@@ -75,7 +77,8 @@ fields = [
 	("heart_rate", "integer"),
 	("distance", "float"),
 	("altitude", "float"),
-	("cadence", "float"), 
+	("cadence", "float"),
+	("device", "string"),
 ]
 
 
