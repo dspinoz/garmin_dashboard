@@ -121,8 +121,28 @@ function interactive_dataTable(thechart) {
 
 var chartPointsCount = dc.numberDisplay("#chart-total-points");
 
+function allPointsGroup(chart) {
+	
+	var ret = 0;
+	
+	var q = d3.queue();
+	
+	q.defer(d3.json, '/all-points-group');
+	
+	q.awaitAll(function(err,data) {
+		ret = data[0].count;
+		chart.render();
+	});
+	
+	return {
+		all:function() {
+			return [ret];
+		}
+	};
+}
+
 chartPointsCount
-  .group(facts.groupAll().reduceCount())
+  .group(allPointsGroup(chartPointsCount))
   .formatNumber(d3.round)
   .valueAccessor(function(d) { return d; });
 
