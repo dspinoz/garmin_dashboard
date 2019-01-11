@@ -1,4 +1,4 @@
-from cubes import Workspace
+import cubes
 from cubes.compat import ConfigParser
 import sys
 
@@ -7,7 +7,7 @@ import sys
 #print("Got slicer configuration",settings)
 
 #workspace = Workspace(config=settings)
-workspace = Workspace()
+workspace = cubes.Workspace()
 print("Got workspace")
 
 workspace.register_default_store("sql", url="sqlite:///data.sqlite")
@@ -31,6 +31,25 @@ for record in result:
 
 print("Aggregate: drilldown=['lap']")
 result = browser.aggregate(drilldown=["lap"])
+
+print(result)
+print(result.summary)
+
+for record in result:
+    print("  ",record)
+
+print("Aggregate: drilldown=['file'] cut=lap:41")
+cell = cubes.Cell(browser.cube, [cubes.PointCut("lap", [41])])
+result = browser.aggregate(cell, drilldown=["file"])
+
+print(result)
+print(result.summary)
+
+for record in result:
+    print("  ",record)
+
+print("Aggregate: drilldown=['file']")
+result = browser.aggregate(drilldown=["file"])
 
 print(result)
 print(result.summary)
