@@ -29,13 +29,12 @@
                     "attributes": ["device"]
                 }
             ]
-        },
-        {"name": "year", "role": "time"}
+        }
     ],
     "cubes": [
         {
             "name": "activities",
-            "dimensions": ["file", "lap", "device", "year"],
+            "dimensions": ["file", "lap", "device"],
             "aggregates": [
                     {
                         "name": "count",
