@@ -67,6 +67,24 @@ def all_activities_group():
   for record in res:
     ret.append(record)
   return json.dumps(ret)
+  
+@route('/drilldown/device/file')
+def drilldown_device_file():
+  devices = browser.aggregate(drilldown=["device"])
+  
+  ret = []
+  
+  for dev in devices:
+    cell = cubes.Cell(browser.cube, [cubes.PointCut("device", [dev['device']])])
+    files = browser.members(cell, "file")
+
+    d = {'key': dev['device'], 'value': []}
+    for f in files:
+      d['value'].append(f)
+  
+    ret.append(d)
+  
+  return json.dumps(ret)
 
 run(host='localhost', port=8000)
 

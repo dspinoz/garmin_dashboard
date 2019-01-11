@@ -508,8 +508,20 @@ var chartDeviceTable = interactive_dataTable(dc.dataTable("#chart-device-table")
 
 var deviceCountGroup = group_reduceCountKey(deviceDim.group(), function(d){return d.File; });
 
-chartDeviceTable
-  .dimension({
+function deviceTableDim(chart) {
+
+	var ret = [];
+	
+	var q = d3.queue();
+	
+	q.defer(d3.json, '/drilldown/device/file');
+	
+	q.awaitAll(function(err,data) {
+		ret = data[0]
+		chart.render();
+	});
+
+  return {
       filter: function(f) {
         deviceDim.filter(f);
       },
@@ -523,18 +535,18 @@ chartDeviceTable
         deviceDim.filterRange(r);
       },
       bottom: function(sz) {
-        var gdata = deviceCountGroup.all();
-        return gdata.filter(function(d,i) { return d.value.size(); });
+        return ret;
       }
-  })
+  }
+}
+
+chartDeviceTable
+  .dimension(deviceTableDim(chartDeviceTable))
   .group(function(d) { return "Activities"; })
   .columns([
     function(d) { return d.key; },
-    function(d) { return "<span class=\"badge\">"+d.value.size()+"</span>"; }
+    function(d) { return "<span class=\"badge\">"+d.value.length+"</span>"; }
   ]);
-  
-  
-  
 
 
 
