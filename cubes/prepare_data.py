@@ -1,19 +1,53 @@
 import sqlalchemy
 from cubes.tutorial.sql import create_table_from_csv
 import lxml.etree as ET
+from xml.etree import ElementTree
 
 import os
 import re
 import sys
 import tempfile
 
+namespaces = {	"g": "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2", 
+				"ext": "http://www.garmin.com/xmlschemas/ActivityExtension/v2"}
+
 xslt = ET.parse('tcx_to_csv.xsl')
 transform = ET.XSLT(xslt)
 
 def activity_tcx_to_csv_str(path):
-	dom = ET.parse(path)
-	return str(transform(dom))
-
+	tree = ElementTree.parse(path)
+	
+	print(path,tree,tree.getroot())
+	
+	for activity in tree.getroot().findall("g:Activities/g:Activity", namespaces):
+		print("Activity: ",activity.attrib['Sport'], activity.find("g:Id", namespaces).text)
+		
+		lapNo = 0
+		pointNo = 0
+		for lap in activity.findall("g:Lap", namespaces):
+			lapNo = lapNo + 1
+			#print("  L ***",lapNo, lap,lap.attrib["StartTime"])
+			
+			for ext in lap.findall("g:Extensions", namespaces):
+				print("    Extension detected **", ext)
+			
+			for point in lap.findall("g:Track/g:Trackpoint", namespaces):
+				#print("    P **",point)
+				pointNo = pointNo + 1
+				
+				yield {
+					"index": pointNo,
+					"lap": lapNo,
+					"time": point.find("g:Time", namespaces).text,
+					"position_lat": point.find("g:Position/g:LatitudeDegrees", namespaces).text,
+					"position_lon": point.find("g:Position/g:LongitudeDegrees", namespaces).text,
+					"heart_rate": point.find("g:HeartRateBpm/g:Value", namespaces).text,
+					"distance": point.find("g:DistanceMeters", namespaces).text,
+					"altitude": point.find("g:AltitudeMeters", namespaces).text,
+					#TODO "cadence": point.find("g:Extensions/ext:TPX/ext:RunCadence", namespaces)},
+				}
+				
+		print("Activity completed with ",lapNo,"laps and ",pointNo,"points")
 
 
 engine = sqlalchemy.create_engine('sqlite:///data.sqlite')
@@ -66,32 +100,28 @@ for root,dirs,files in os.walk("./activities"):
 		f_path = os.path.join(root,f)
 		print(f,re.match('.*\.tcx$',f))
 		if re.match('.*\.tcx$',f):
-			csvstr = activity_tcx_to_csv_str(f_path)
-
-			print("Created csv")
-			
-			insert_command = table.insert()
-			
-			header_row = None
-			
-			for line in csvstr.splitlines():
-				row = line.split(",")
+			try:
+				points = activity_tcx_to_csv_str(f_path)
 				
-				if not header_row:
-					header_row = row
-					continue
+				icmd = table.insert()
 				
-				record = dict(zip(field_names, row))
-				print("record",record)
-				
-				if not record['distance']:
-					record['distance'] = 0
+				for p in points:
 					
-				if not record['altitude']:
-					record['altitude'] = 0
+					p['file'] = f
 					
-				if not record['cadence']:
-					record['cadence'] = 0
+					if 'distance' not in p or not p['distance']:
+						p['distance'] = 0
+						
+					if 'altitude' not in p or not p['altitude']:
+						p['altitude'] = 0
+						
+					if 'cadence' not in p or not p['cadence']:
+						p['cadence'] = 0
+						
+					#print(p)
+					icmd.execute(p)
 					
-				insert_command.execute(record)
-
+			except AttributeError as err:
+				print("Error processing",f,err)
+				pass
+			
