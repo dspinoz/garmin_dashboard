@@ -2,14 +2,20 @@ import requests
 import json
 import sys
 
-create = False
-insert = False
+import lxml.etree as ET
+from bottle import route, run, template, static_file, response
+
+xslt = ET.parse('tcx_to_csv.xsl')
+transform = ET.XSLT(xslt)
+
+create = True
+insert = True
 search = True
 
 limit = 500
 
-index = "dictionary"
-subindex = "words"
+index = "garmin_dashboard"
+subindex = "activities"
 
 headers = {
     'Content-Type': "application/json",
@@ -42,54 +48,53 @@ if __name__ == "__main__":
 
     post_url = "http://localhost:9200/{}/{}".format(index, subindex)
     
+    csv_header = None
     
-    fd = open('/usr/share/dict/words','r')
-    
-    
+    fd = open('activities/Activities_all.txt','r')
     for line in fd.readlines():
       count = count + 1
-      word = line.strip()
-    
-      payload ={
-      "word":word,
-      }
+      if count == 1:
+        csv_header = list(line.strip().split(','))
+        next
+        
+      activity = {}
+      for i,col in enumerate(line.strip().split(',')):
+        activity[csv_header[i]] = col
       
-      payload = json.dumps(payload)
+      payload = json.dumps(activity)
+      print(payload)
       
       response = requests.request("POST", post_url, data=payload, headers=headers)
 
       if(response.status_code!=201):
         print("Values not Posted in",index)
       
-      if count % 1000 == 0:
-        print("Saving words...",count)
-    
-      if limit != 0 and count > limit:
-        break
+      #if count % 1000 == 0:
+      #  print("Saving words...",count)
+      #
+      #if limit != 0 and count > limit:
+      #  break
     
     fd.close()
     
-    
-    print("Saved",count,"words")
+    print("Saved",count,"activities")
   
   
     
   if search:
-    search_term = ".*man"
+    search_term = "Aerobic HR*"
     
     print("Search Term:", search_term)
     payload = {
         "query": {
-            "regexp": {
-                "word": str(search_term),
+            "match": {
+                "Name": str(search_term),
             }
         },
         "size": 50,
-        "sort": [
-
-        ]
     }
     payload = json.dumps(payload)
+    print(payload)
     url = "http://localhost:9200/{}/{}/_search".format(index, subindex)
     response = requests.request("GET", url, data=payload, headers=headers)
     response_dict_data = json.loads(str(response.text))
@@ -97,5 +102,5 @@ if __name__ == "__main__":
     
     print("RESULTS (",response_dict_data['hits']['total'],")")
     for h in response_dict_data['hits']['hits']:
-      print(h['_source']['word'], h['_score'])
+      print(h['_source']['Name'], h['_source']['File'])
     
