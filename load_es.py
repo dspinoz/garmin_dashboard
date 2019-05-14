@@ -14,7 +14,7 @@ search = True
 
 limit = 500
 
-index = "garmin_dashboard"
+index = "activities"
 subindex = "activities"
 
 headers = {
