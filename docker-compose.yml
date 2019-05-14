@@ -1,0 +1,38 @@
+# https://medium.com/devopslinks/building-a-real-time-elastic-search-engine-using-python-32e05bcb9140
+version: '3'
+services:
+  elasticsearch:
+    image: "elasticsearch:5"
+    networks:
+      - frontend
+    restart: always
+    volumes:
+      - ./ES_DATA:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl","-s" ,"-f", "http://localhost:9200/_cat/health"]
+      retries: 6
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+
+
+  kibana:
+    image: kibana:5
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - frontend
+    depends_on:
+      - elasticsearch
+
+
+
+
+networks:
+  frontend:
