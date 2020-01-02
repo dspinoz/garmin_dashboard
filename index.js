@@ -121,8 +121,28 @@ function interactive_dataTable(thechart) {
 
 var chartPointsCount = dc.numberDisplay("#chart-total-points");
 
+function allPointsGroup(chart) {
+	
+	var ret = 0;
+	
+	var q = d3.queue();
+	
+	q.defer(d3.json, '/aggregate');
+	
+	q.awaitAll(function(err,data) {
+		ret = data[0].count;
+		chart.render();
+	});
+	
+	return {
+		all:function() {
+			return [ret];
+		}
+	};
+}
+
 chartPointsCount
-  .group(facts.groupAll().reduceCount())
+  .group(allPointsGroup(chartPointsCount))
   .formatNumber(d3.round)
   .valueAccessor(function(d) { return d; });
 
@@ -300,9 +320,30 @@ function group_reduceMappedValue(group,keyFunc,valueFunc) {
     });
 }
 
-var chartTotalDistance = dc.numberDisplay("#chart-total-activities");
-chartTotalDistance
-  .group(group_get_length(fileDim.group().reduceCount(), function(d){ return d.value; }))
+var chartTotalActivities = dc.numberDisplay("#chart-total-activities");
+
+function allActivitiesGroup(chart) {
+	
+	var ret = 0;
+	
+	var q = d3.queue();
+	
+	q.defer(d3.json, '/drilldown/file');
+	
+	q.awaitAll(function(err,data) {
+		ret = data[0].length
+		chart.render();
+	});
+	
+	return {
+		all:function() {
+			return [ret];
+		}
+	};
+}
+
+chartTotalActivities
+  .group(allActivitiesGroup(chartTotalActivities))
   .formatNumber(d3.round)
   .valueAccessor(function(d) { return d; });
   
@@ -467,8 +508,20 @@ var chartDeviceTable = interactive_dataTable(dc.dataTable("#chart-device-table")
 
 var deviceCountGroup = group_reduceCountKey(deviceDim.group(), function(d){return d.File; });
 
-chartDeviceTable
-  .dimension({
+function deviceTableDim(chart) {
+
+	var ret = [];
+	
+	var q = d3.queue();
+	
+	q.defer(d3.json, '/drilldown/device/file');
+	
+	q.awaitAll(function(err,data) {
+		ret = data[0]
+		chart.render();
+	});
+
+  return {
       filter: function(f) {
         deviceDim.filter(f);
       },
@@ -482,18 +535,18 @@ chartDeviceTable
         deviceDim.filterRange(r);
       },
       bottom: function(sz) {
-        var gdata = deviceCountGroup.all();
-        return gdata.filter(function(d,i) { return d.value.size(); });
+        return ret;
       }
-  })
+  }
+}
+
+chartDeviceTable
+  .dimension(deviceTableDim(chartDeviceTable))
   .group(function(d) { return "Activities"; })
   .columns([
     function(d) { return d.key; },
-    function(d) { return "<span class=\"badge\">"+d.value.size()+"</span>"; }
+    function(d) { return "<span class=\"badge\">"+d.value.length+"</span>"; }
   ]);
-  
-  
-  
 
 
 

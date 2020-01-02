@@ -1,0 +1,46 @@
+{
+    "dimensions": [
+        {
+         "name": "lap",
+         "levels": [
+                {
+                    "name":"lap",
+                    "label":"Lap",
+                    "attributes": ["lap"]
+                }
+            ]
+        },
+        {
+         "name": "file",
+         "levels": [
+                {
+                    "name":"file",
+                    "label":"File",
+                    "attributes": ["file"]
+                }
+            ]
+        },
+        {
+         "name": "device",
+         "levels": [
+                {
+                    "name":"device",
+                    "label":"Device",
+                    "attributes": ["device"]
+                }
+            ]
+        }
+    ],
+    "cubes": [
+        {
+            "name": "activities",
+            "dimensions": ["file", "lap", "device"],
+            "aggregates": [
+                    {
+                        "name": "count",
+                        "function": "count"
+                    }
+                ]
+        }
+    ]
+}
